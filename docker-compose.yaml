@@ -1,0 +1,17 @@
+services:
+  server:
+    image: ${CI_REGISTRY_IMAGE:-server}:${APP_VERSION:-local}
+    build:
+      dockerfile: Dockerfile
+      target: build
+    volumes:
+      - "./bin:/compiled"
+    entrypoint: bash
+    command: ["cp", "-f", "/usr/bin/laralord",  "/compiled/laralord"]
+
+  alpine:
+    image: ${CI_REGISTRY_IMAGE:-server}:${APP_VERSION:-local}-alpine
+    build:
+      dockerfile: deploy/alpine/Dockerfile
+      target: build
+      context: .

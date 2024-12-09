@@ -1,0 +1,11 @@
+./vendor
+./vendor-bin/box/vendor
+#.git
+.env
+envs
+.idea
+./bin
+.dockerfile
+docker-compose.yaml
+/src/experiments/
+#.

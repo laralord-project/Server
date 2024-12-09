@@ -1,0 +1,13 @@
+#!/bin/bash
+
+set -e
+source tenant-init.sh
+
+if ! initialize_tenant "$TENANT_ID"; then
+  echo "Failed to initialize tenant ${TENANT_ID}."
+  exit 1
+fi
+
+php artisan --no-ansi queue:clean
+php artisan --no-ansi queue:flush
+

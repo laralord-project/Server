@@ -1,0 +1,6 @@
+{
+    "require": {
+        "humbug/box": "^4.6",
+        "humbug/php-scoper": "^0.18"
+    }
+}
