@@ -48,7 +48,7 @@ RUN ./vendor/bin/box compile  --no-parallel
 
 FROM base AS build
 
-COPY --from=compile ./laralord/bin/laralord.phar /usr/bin/laralord
+COPY --from=compile /laralord/bin/laralord /usr/bin/laralord
 USER root
 RUN chmod o+x /usr/bin/laralord
 RUN mkdir /secrets && chown www:www -R /secrets

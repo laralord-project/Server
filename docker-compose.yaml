@@ -7,7 +7,7 @@ services:
     volumes:
       - "./bin:/compiled"
     entrypoint: bash
-    command: ["cp", "-f", "/usr/bin/laralord",  "/compiled/laralord"]
+    command: ["-c", "cp -f /usr/bin/laralord /compiled/laralord"]
 
   alpine:
     image: ${CI_REGISTRY_IMAGE:-server}:${APP_VERSION:-local}-alpine

@@ -1,7 +1,9 @@
 {
-  "name": "laralord/server",
-  "description": "Webserver for Laravel applications with dynamic environment variables\u001b[H\u001b[F",
+  "name": "laralord-project/server",
+  "description": "Laralord enables multi-tenancy for any stateless Laravel application without requiring code updates.\nIt is an OpenSwoole wrapper designed to provide a high-performance, multi-tenant server setup for Laravel Application.",
   "type": "project",
+  "homepage": "https://laralord.dev/",
+  "license": "Apache-2.0",
   "authors": [
     {
       "name": "Vitalii Liubimov",
@@ -15,13 +17,13 @@
     "ext-pcntl": "*",
     "ext-sysvmsg": "*",
     "ext-redis": "*",
+    "ext-fileinfo": "*",
     "vlucas/phpdotenv": "^5.6",
     "openswoole/core": "^22.1",
     "openswoole/ide-helper": "^22.1",
     "guzzlehttp/guzzle": "^7.8",
     "monolog/monolog": "^3.6",
     "bamarni/composer-bin-plugin": "^1.8",
-    "ext-fileinfo": "*",
     "aws/aws-sdk-php": "^3.324"
   },
   "autoload": {
@@ -29,6 +31,9 @@
       "Server\\": "src/"
     }
   },
+  "bin": [
+    "bin/laralord"
+  ],
   "autoload-dev": {
     "psr-4": {
       "Tests\\": "tests/"

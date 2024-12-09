@@ -1,6 +1,6 @@
 ./vendor
 ./vendor-bin/box/vendor
-#.git
+
 .env
 envs
 .idea
