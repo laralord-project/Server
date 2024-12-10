@@ -19,7 +19,7 @@ jobs:
         with:
           php-version: 8.2
           extensions: inotify,apcu,sysvmsg,pcntl,openswoole,redis
-          key: ${{ env.key }}
+          key: php-ext-key-1
 
       - name: Cache extensions
         uses: actions/cache@v4
