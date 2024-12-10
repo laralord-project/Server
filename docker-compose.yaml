@@ -4,9 +4,11 @@ services:
     build:
       dockerfile: Dockerfile
       target: build
+    environment:
+      - APP_VERSION=0.1.0-local
     volumes:
       - "./bin:/compiled"
-    entrypoint: bash
+    entrypoint: sh
     command: ["-c", "cp -f /usr/bin/laralord /compiled/laralord"]
 
   alpine:

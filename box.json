@@ -11,6 +11,5 @@
     "KevinGH\\Box\\Compactor\\Php",
     "KevinGH\\Box\\Compactor\\PhpScoper",
     "KevinGH\\Box\\Compactor\\Json"
-  ],
-  "git": "version"
+  ]
 }

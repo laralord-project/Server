@@ -126,6 +126,10 @@ return [
                 $contents = str_replace('%license%', $license, $contents);
             }
 
+            if ($filePath === 'src/CliProcessor.php') {
+                $contents = str_replace('@version@', $_ENV['APP_VERSION'] ?? 'local_build', $contents);
+            }
+
             return $contents;
         },
     ],

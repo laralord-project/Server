@@ -101,6 +101,8 @@ class CliProcessor
                 $this->processEnvCommands();
 
                 return;
+            case '--version':
+            case '-v':
             case 'version';
                 echo "Version: ".$this->getVersion()."\n";
 
