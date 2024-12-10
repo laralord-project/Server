@@ -24,6 +24,9 @@ jobs:
     name: Compile and Release Binary
     runs-on: ubuntu-latest
 
+    env:
+      APP_VERSION: ${{ inputs.release_tag }}
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -65,8 +68,6 @@ jobs:
         run: |
           echo "Building PHAR: $APP_VERSION"
           ./vendor/bin/box compile  --no-parallel
-        env:
-          APP_VERSION: ${{ inputs.release_tag }}
 
       - name: Commit and Push Binary
         run: |
