@@ -16,6 +16,8 @@ on:
         description: 'Draft flag'
         default: false
 
+permissions:
+  contents: write
 
 jobs:
   build-and-release:
