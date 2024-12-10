@@ -1,4 +1,9 @@
+ARG APP_VERSION
+
 FROM php:8.2.26-cli AS base
+
+ARG APP_VERSION
+ENV APP_VERSION=$APP_VERSION
 
 RUN groupadd -g 1000 www
 RUN useradd -u 1000 -ms /bin/bash -g www www
@@ -10,8 +15,7 @@ RUN apt-get update && apt-get install -y git
 
 COPY deploy/scripts /opt/scripts
 COPY deploy/scripts/docker-entrypoint.sh  /docker-entrypoint.sh
-RUN chmod +x /opt/scripts/* \
-	&& chown www:www /var/www
+RUN chmod +x /opt/scripts/* && chown www:www /var/www
 
 WORKDIR /var/www
 
@@ -35,7 +39,7 @@ COPY . /laralord
 RUN chown www:www -R /laralord
 USER www:www
 WORKDIR /laralord
-RUN composer install  && composer bin box install
+RUN composer install && composer bin box install
 RUN ./vendor/bin/phpunit
 
 FROM test AS compile
