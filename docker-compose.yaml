@@ -6,8 +6,10 @@ services:
       target: build
     environment:
       - APP_VERSION=0.1.0-local
+    working_dir: /laralord
     volumes:
       - "./bin:/compiled"
+      - ".:/laralord"
     entrypoint: sh
     command: ["-c", "cp -f /usr/bin/laralord /compiled/laralord"]
 
