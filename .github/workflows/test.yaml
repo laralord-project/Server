@@ -7,18 +7,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 100
 
-      - name: test
+      - name: Set Up PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
           extensions: inotify,apcu,sysvmsg,pcntl,openswoole,redis
           tools: composer, phpunit
 
-      - name: install-composer-dependencies
+      - name: Install Composer Dependencies
         run: composer install && composer bin box install
 
       - name: run-test
