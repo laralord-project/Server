@@ -1,3 +1,7 @@
+
+[![Test](https://github.com/laralord-project/server/actions/workflows/test.yaml/badge.svg?branch=main)](https://github.com/laralord-project/server/actions/workflows/test.yaml)
+
+
 # <img src="art/logo.png" width="28" alt="LaraLord Server" >  &nbsp; Laralord Project - Server
 
 Laralord enables multi-tenancy for any stateless Laravel application without requiring code updates.

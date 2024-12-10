@@ -1,6 +1,6 @@
 on:
   - pull_request
-name: Unit Test and Build Test
+name: Tests
 
 jobs:
   phpunit:
