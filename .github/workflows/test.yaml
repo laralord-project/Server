@@ -32,8 +32,8 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-          extensions: inotify,apcu,sysvmsg,pcntl,openswoole,redis
-          tools: composer, phpunit
+          extensions: inotify, apcu, sysvmsg, pcntl, openswoole, redis
+          tools: composer, phpunit,
 
       - name: Install Composer Dependencies
         run: composer install && composer bin box install
