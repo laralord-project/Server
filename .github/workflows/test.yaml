@@ -18,7 +18,10 @@ jobs:
           tools: composer, phpunit
 
       - name: install-composer-dependencies
-        run: composer install
+        run: composer install && composer bin box install
 
       - name: run-test
         run: phpunit
+
+      - name: build
+        run: ./vendor/bin/box compile  --no-parallel
