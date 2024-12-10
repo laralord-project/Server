@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+
+source tenant-init.sh
+
+if ! initialize_tenant "$TENANT_ID"; then
+  echo "Failed to initialize tenant ${TENANT_ID}."
+  exit 1
+fi
+
+# Always clean up the environment file
+rm -f "$ENV_FILE"
+
+# Execute the command passed as arguments
+echo "Executing command in the context of tenant ${TENANT_ID}:"
+"$@"
+COMMAND_EXIT_CODE=$?
+
+# Exit with the status of the executed command
+exit $COMMAND_EXIT_CODE

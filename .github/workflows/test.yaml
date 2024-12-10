@@ -1,0 +1,49 @@
+on:
+  pull_request:
+    branches:
+      - main
+name: Tests
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 100
+
+      - name: Setup cache environment
+        id: extcache
+        uses: shivammathur/cache-extensions@v1
+        with:
+          php-version: 8.2
+          extensions: inotify,apcu,sysvmsg,pcntl,openswoole,redis
+          key: php-ext-key-1
+
+      - name: Cache extensions
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.extcache.outputs.dir }}
+          key: ${{ steps.extcache.outputs.key }}
+          restore-keys: ${{ steps.extcache.outputs.key }}
+
+      - name: Set Up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: inotify, apcu, sysvmsg, pcntl, openswoole, redis
+          tools: composer, phpunit,
+
+      - name: Install Composer Dependencies
+        run: composer install && composer bin box install
+
+      - name: run-test
+        run: phpunit
+
+      - name: build
+        run: |
+          echo "Building PHAR: $APP_VERSION"
+          ./vendor/bin/box compile  --no-parallel
+        env:
+          APP_VERSION: test-build-${{ github.ref }}

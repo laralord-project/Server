@@ -1,0 +1,14 @@
+#!/bin/bash
+
+set -e
+source tenant-init.sh
+
+if ! initialize_tenant "$TENANT_ID"; then
+  echo "Failed to initialize tenant ${TENANT_ID}."
+  exit 1
+fi
+
+echo "Tenant $TENANT_ID bootstrap start"
+
+php artisan  --no-ansi migrate --seed
+php artisan  --no-ansi queue:restart

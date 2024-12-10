@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -e
+
+laralord env:list --logLevel=error | while read -r tenantId ; do
+    set +e
+    export TENANT_ID=$tenantId
+    tenant-context "$@";
+done
+
