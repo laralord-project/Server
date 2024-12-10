@@ -13,6 +13,21 @@ jobs:
         with:
           fetch-depth: 100
 
+      - name: Setup cache environment
+        id: extcache
+        uses: shivammathur/cache-extensions@v1
+        with:
+          php-version: 8.2
+          extensions: inotify,apcu,sysvmsg,pcntl,openswoole,redis
+          key: ${{ env.key }}
+
+      - name: Cache extensions
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.extcache.outputs.dir }}
+          key: ${{ steps.extcache.outputs.key }}
+          restore-keys: ${{ steps.extcache.outputs.key }}
+
       - name: Set Up PHP
         uses: shivammathur/setup-php@v2
         with:
