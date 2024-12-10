@@ -1,5 +1,6 @@
-on: push
-name: test
+on:
+  - pull_request
+name: Unit Test and Build Test
 
 jobs:
   phpunit:
@@ -24,4 +25,8 @@ jobs:
         run: phpunit
 
       - name: build
-        run: ./vendor/bin/box compile  --no-parallel
+        run: |
+          echo "Building PHAR: $APP_VERSION"
+          ./vendor/bin/box compile  --no-parallel
+        env:
+          APP_VERSION: test-build-${{ github.ref }}
