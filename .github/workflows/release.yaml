@@ -30,6 +30,21 @@ jobs:
         with:
           fetch-depth: 100
 
+      - name: Setup cache environment
+        id: extcache
+        uses: shivammathur/cache-extensions@v1
+        with:
+          php-version: 8.2
+          extensions: inotify,apcu,sysvmsg,pcntl,openswoole,redis
+          key: php-ext-key-1
+
+      - name: Cache extensions
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.extcache.outputs.dir }}
+          key: ${{ steps.extcache.outputs.key }}
+          restore-keys: ${{ steps.extcache.outputs.key }}
+
       - name: Set Up PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -68,7 +83,10 @@ jobs:
           
 
       - name: Create GitHub Release
+        id: create-release
         uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ inputs.release_tag }}
           release_name: ${{ inputs.release_name }}
