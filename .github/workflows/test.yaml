@@ -1,0 +1,24 @@
+on: push
+name: test
+
+jobs:
+  phpunit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          fetch-depth: 100
+
+      - name: test
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: inotify,apcu,sysvmsg,pcntl,openswoole,redis
+          tools: composer, phpunit
+
+      - name: install-composer-dependencies
+        run: composer install
+
+      - name: run-test
+        run: phpunit
