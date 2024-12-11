@@ -105,11 +105,8 @@ It is an OpenSwoole wrapper designed to provide a high-performance, multi-tenant
 The main idea is to separate the application logic and multi-tenant management logic. 
 
 The solution is to serve the Laravel application on the specific server which resolve the events by tenants and bypass the events to Laravel application on correspond enviromment.
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./art/concept-diagram-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="./art/concept-diagram.svg">
-  <img alt="Main concept diagram" src="./art/concept-diagram.svg">
-</picture>
+![](./art/concept-diagram-dark.svg#gh-dark-mode-only)
+![](./art/concept-diagram.svg#gh-light-mode-only)
 
 This project doesn't cover the tenant's resource provisioning. 
 
