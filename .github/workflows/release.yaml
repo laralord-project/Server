@@ -1,4 +1,4 @@
-name: Compile and Release Binary
+name: Release
 
 on:
   workflow_dispatch:
@@ -15,6 +15,7 @@ on:
       draft:
         description: 'Draft flag'
         default: false
+
 
 permissions:
   contents: write
