@@ -9,6 +9,10 @@ on:
       release_tag:
         description: 'Created release tag (e.g., v1.0.0)'
         required: true
+      prerelease:
+        description: 'Is this a prerelease build?'
+        default: false
+
 permissions:
   contents: read
 
@@ -16,13 +20,17 @@ jobs:
   build-and-push:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
+
     env:
+      # Use release tag if it's a release event, or workflow input otherwise
       APP_VERSION: ${{ github.event.release.tag_name || inputs.release_tag }}
+      IS_PRERELEASE: ${{ github.event.release.prerelease || inputs.prerelease }}
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
+          # Use release tag for the ref if provided
           ref: ${{ github.event.release.tag_name || inputs.release_tag }}
 
       - name: Log in to Docker Hub
@@ -34,21 +42,23 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push with tag
+      - name: Build and push Docker image
         uses: docker/build-push-action@v6
-        if: ${{ github.event.release.prerelease == true }}
         with:
-          args: APP_VERSION=${{ github.event.release.tag_name }}
           push: true
           tags: |
-            ${{ secrets.DOCKER_REGISTRY }}:${{ github.event.release.tag_name }}
-
-      - name: Build and push with latest
-        uses: docker/build-push-action@v6
-        if: ${{ github.event.release.prerelease == false }}
-        with:
-          args: APP_VERSION=${{ github.event.release.tag_name }}
-          push: true
-          tags: |
-            ${{ secrets.DOCKER_REGISTRY }}:${{ github.event.release.tag_name }}
+            ${{ secrets.DOCKER_REGISTRY }}:${{ env.APP_VERSION }}
             ${{ secrets.DOCKER_REGISTRY }}:latest
+        env:
+          APP_VERSION: ${{ env.APP_VERSION }}
+        if: ${{ env.IS_PRERELEASE == 'false' }}
+
+      - name: Build and push Docker image (prerelease)
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_REGISTRY }}:${{ env.APP_VERSION }}
+        env:
+          APP_VERSION: ${{ env.APP_VERSION }}
+        if: ${{ env.IS_PRERELEASE == 'true' }}
