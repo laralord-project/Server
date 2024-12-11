@@ -22,7 +22,7 @@ jobs:
         uses: shivammathur/cache-extensions@v1
         with:
           php-version: 8.2
-          extensions: inotify,apcu,sysvmsg,pcntl,openswoole,redis
+          extensions: inotify, apcu, sysvmsg, pcntl, openswoole, redis
           key: php-ext-key-1
 
       - name: Cache extensions
@@ -43,12 +43,16 @@ jobs:
       - name: Install Composer Dependencies
         run: composer install && composer bin box install
 
-      - name: run-test
+      - name: Unit tests
         run: phpunit
 
-      - name: build
+      - name: Git describe
+        id: ghd
+        uses: proudust/gh-describe@v2
+
+      - name: Build test
         run: |
           echo "Building PHAR: $APP_VERSION"
           ./vendor/bin/box compile  --no-parallel
         env:
-          APP_VERSION: test-build-${{ github.ref }}
+          APP_VERSION: ${{ steps.ghd.outputs.describe }}
