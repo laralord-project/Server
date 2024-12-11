@@ -52,7 +52,12 @@ It is an OpenSwoole wrapper designed to provide a high-performance, multi-tenant
 
 ## Components
 
-1. **[Server](#server)**
+1. **[Intallation](#Installation)**
+    - Composer Install 
+    - Download Binary File
+    - Docker Image
+2. **[Server](#server)**
+    - [How it works..](#concept-diagram)
     - [Commands](#server-commands)
     - [Configuration (Options and Environment Variables)](#server-configuration-options-and-environment-variables)
 2. **[S3-Proxy](#s3-proxy)**
@@ -64,14 +69,53 @@ It is an OpenSwoole wrapper designed to provide a high-performance, multi-tenant
 4. **[Scheduler](#scheduler)**
     - [Commands](#scheduler-commands)
     - [Configuration (Options and Environment Variables)](#scheduler-configuration-options-and-environment-variables)
-5. **[Environment Source and Resolvers](#env-source)
-6. **[Environment Helpers](#environment-helpers)**
+5. **[Environment Source and Resolvers](#env-source)**
+6. **[Bash Helpers](#environment-helpers)**
 
+
+---
+
+## **Installation**
+
+1. Composer install
+
+    ``$ composer require laralord-project/server``
+
+   ```
+    # to run the server use the command
+    $ ./vendor/bin/laralord server:start
+   ```
+    > **WARNING** we don't recommend this method  because composer will install all required dependencies to build the server which is actually not required for compiled work 
+2. Download the asset from [releases](https://github.com/laralord-project/Server/releases)
+    ```
+    $ curl https://github.com/laralord-project/Server/releases/download/v0.1.0/laralord \ 
+          && chmod +x laralord && mv laralord /usr/bin/laralord
+   ```
+3. Using [docker image](https://hub.docker.com/r/laralordproject/server)
+    
+    Docker image include the bash helpers which could be used on the tenants provisioning and management 
 ---
 
 ## Components
 
 ### **Server**
+
+#### How it works
+
+The main idea is to separate the application logic and multi-tenant management logic. 
+
+The solution is to serve the Laravel application on the specific server which resolve the events by tenants and bypass the events to Laravel application on correspond enviromment.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./art/concept-diagram-dark.svg">
+  <source media="(prefers-color-scheme: light)" srcset="./art/concept-diagram.svg">
+  <img alt="Main concept diagram" src="./art/concept-diagram.svg">
+</picture>
+
+This project doesn't cover the tenant's resource provisioning. 
+
+It cover the lower level of multi-tenancy architecture.
+
+On our site you could cover all    
 
 #### Description
 
@@ -314,7 +358,7 @@ Supports a single-tenant environment. This configuration directly references the
 
  ---
 
-### **Environment Helpers**
+### **Bash Helpers**
 
 #### Description
 

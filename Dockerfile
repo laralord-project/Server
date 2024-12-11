@@ -58,4 +58,5 @@ RUN chmod o+x /usr/bin/laralord
 RUN mkdir /secrets && chown www:www -R /secrets
 USER www:www
 
+FROM base AS Laravel
 
