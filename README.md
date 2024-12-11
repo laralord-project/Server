@@ -52,12 +52,12 @@ It is an OpenSwoole wrapper designed to provide a high-performance, multi-tenant
 
 ## Components
 
-1. **[Intallation](#Installation)**
+1. **[Intallation](#installation)**
     - Composer Install 
     - Download Binary File
     - Docker Image
 2. **[Server](#server)**
-    - [How it works..](#concept-diagram)
+    - [How it works..](#how-it-works)
     - [Commands](#server-commands)
     - [Configuration (Options and Environment Variables)](#server-configuration-options-and-environment-variables)
 2. **[S3-Proxy](#s3-proxy)**
@@ -77,7 +77,7 @@ It is an OpenSwoole wrapper designed to provide a high-performance, multi-tenant
 
 ## **Installation**
 
-1. Composer install
+1. #### Composer install
 
     ``$ composer require laralord-project/server``
 
@@ -86,25 +86,28 @@ It is an OpenSwoole wrapper designed to provide a high-performance, multi-tenant
     $ ./vendor/bin/laralord server:start
    ```
     > **WARNING** we don't recommend this method  because composer will install all required dependencies to build the server which is actually not required for compiled work 
-2. Download the asset from [releases](https://github.com/laralord-project/Server/releases)
+2. #### Download the asset from [releases](https://github.com/laralord-project/Server/releases)
     ```
     $ curl https://github.com/laralord-project/Server/releases/download/v0.1.0/laralord \ 
           && chmod +x laralord && mv laralord /usr/bin/laralord
    ```
-3. Using [docker image](https://hub.docker.com/r/laralordproject/server)
+3. #### Using [docker image](https://hub.docker.com/r/laralordproject/server)
     
-    Docker image include the bash helpers which could be used on the tenants provisioning and management 
+    Docker image include the bash helpers which could be used on the tenants provisioning and management
+
+
 ---
 
 ## Components
 
 ### **Server**
 
-#### How it works
+#### **How it works**
 
 The main idea is to separate the application logic and multi-tenant management logic. 
 
 The solution is to serve the Laravel application on the specific server which resolve the events by tenants and bypass the events to Laravel application on correspond enviromment.
+
 ![](./art/concept-diagram-dark.svg#gh-dark-mode-only)
 ![](./art/concept-diagram.svg#gh-light-mode-only)
 
@@ -126,7 +129,7 @@ requests in both single and multi-tenant modes.
 - Dynamic environment variable management.
 - Isolated request handling using the `pcntl` extension.
 
-#### [Commands](#server-commands)
+#### **Server Commands**
 
 | Command                     | Description                                       |  
 |-----------------------------|---------------------------------------------------|  
