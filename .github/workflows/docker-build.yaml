@@ -4,7 +4,11 @@ on:
   release:
     types:
       - created
-
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Created release tag (e.g., v1.0.0)'
+        required: true
 permissions:
   contents: read
 
@@ -13,11 +17,13 @@ jobs:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
     env:
-      APP_VERSION: ${{ github.event.release.tag_name }}
+      APP_VERSION: ${{ github.event.release.tag_name || inputs.release_tag }}
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || inputs.release_tag }}
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
