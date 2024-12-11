@@ -1,11 +1,9 @@
 name: Build and Push Docker Image
 
 on:
-  workflow_run:
-    workflows:
-      - Release
+  release:
     types:
-      - completed
+      - created
 
 permissions:
   contents: read
