@@ -17,10 +17,6 @@ jobs:
         with:
           fetch-depth: 100
 
-      - name: Git describe
-        id: ghd
-        uses: proudust/gh-describe@v2
-
       - name: Setup cache environment
         id: extcache
         uses: shivammathur/cache-extensions@v1
@@ -49,6 +45,10 @@ jobs:
 
       - name: Unit tests
         run: phpunit
+
+      - name: Git describe
+        id: ghd
+        uses: proudust/gh-describe@v2
 
       - name: Build test
         run: |

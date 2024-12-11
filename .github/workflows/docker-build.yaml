@@ -28,8 +28,18 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push
+      - name: Build and push with tag
         uses: docker/build-push-action@v6
+        if: ${{ github.event.release.prerelease == true }}
+        with:
+          args: APP_VERSION=${{ github.event.release.tag_name }}
+          push: true
+          tags: |
+            ${{ secret.DOCKER_REGISTRY }}:${{ github.event.release.tag_name }}
+
+      - name: Build and push with latest
+        uses: docker/build-push-action@v6
+        if: ${{ github.event.release.prerelease == false }}
         with:
           args: APP_VERSION=${{ github.event.release.tag_name }}
           push: true
