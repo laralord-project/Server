@@ -40,8 +40,6 @@ jobs:
         with:
           fetch-depth: 10
           token: ${{ steps.app-token.outputs.token }}
-          # Make sure the value of GITHUB_TOKEN will not be persisted in repo's config
-          persist-credentials: false
 
       - name: Setup cache environment
         id: extcache
