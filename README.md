@@ -1,5 +1,9 @@
 
 [![Test](https://github.com/laralord-project/server/actions/workflows/test.yaml/badge.svg?branch=main)](https://github.com/laralord-project/server/actions/workflows/test.yaml)
+![GitHub Release](https://img.shields.io/github/v/release/laralord-project/server?logo=github&label=Last%20Release&color=orange)
+![Docker Image Version](https://img.shields.io/docker/v/laralordproject/server?logo=docker&label=Docker%20Image&color=green)
+
+
 
 
 # <img src="assets/logo.png" width="34" alt="LaraLord Server" >  &nbsp; LaraLord Project - Server
