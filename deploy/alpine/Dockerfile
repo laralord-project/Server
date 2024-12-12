@@ -13,7 +13,7 @@ RUN apk update && apk add --no-cache \
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
 
 # Install PHP extensions - Laravel Dependencies
-RUN install-php-extensions @composer redis openssl mbstring pdo pdo_pgsql pdo_mysql zip exif gd
+RUN install-php-extensions @composer redis openssl mbstring pdo pdo_pgsql pdo_mysql zip exif gd > /dev/null
 
 # LaraLord dependencies
 RUN install-php-extensions inotify apcu sysvmsg pcntl openswoole > /dev/null
