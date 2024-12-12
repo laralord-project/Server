@@ -127,7 +127,7 @@ return [
             }
 
             if ($filePath === 'src/CliProcessor.php') {
-                $appVersion = $_ENV['APP_VERSION'] ?? '0.1.0-local';
+                $appVersion = $_ENV['APP_VERSION'] ?? $_ENV['LARALORD_VERSION'] ?? '0.1.0-local';
                 echo "Application Version: $appVersion " . PHP_EOL;
 
                 $contents = str_replace('@version@', $appVersion, $contents);

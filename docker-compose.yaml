@@ -3,15 +3,19 @@ services:
     build:
       dockerfile: Dockerfile
       target: build
+      args:
+        - APP_VERSION=${APP_VERSION:-0.1.0-local}
     environment:
       - APP_VERSION=0.1.0-local
     working_dir: /laraorld
     volumes:
       - "./:/laralord"
-    entrypoint: sh
+    command: ['bash']
 
   alpine:
     build:
       dockerfile: deploy/alpine/Dockerfile
       target: build
       context: .
+      args:
+        - APP_VERSION=${APP_VERSION:- 0.1.0-local}

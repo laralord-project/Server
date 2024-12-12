@@ -3,6 +3,7 @@
 
 .env
 envs
+info
 .idea
 ./bin
 .dockerfile
