@@ -1,5 +1,5 @@
 [Back to Menu](../README.md#documentation)<a id='top'></a>
-## **Installation**
+### **Installation**
 
 1. #### **Composer install**
 
@@ -10,7 +10,7 @@
     $ ./vendor/bin/laralord server:start
    ```
    > **WARNING** we don't recommend this method  because composer will install all required dependencies to build the server which is actually not required for compiled work
-2. #### Download the asset from [releases](https://github.com/laralord-project/Server/releases)
+2. #### **Download Binary File**
     ```
     $ curl https://github.com/laralord-project/Server/releases/download/v0.1.0/laralord \ 
           && chmod +x laralord && mv laralord /usr/bin/laralord

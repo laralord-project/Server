@@ -6,6 +6,10 @@ The commands `queue`, `scheduler`, and `server` support the `ENV_SOURCE` environ
 ####    1. `ENV_SOURCE=vault`
 Fetches credentials from Vault HashiCorp and supports the following configurations:
 
+For Production environment we recommend to use auth type **kubernetes** - because this approach avoid the token's TTL management. 
+
+Kubernetes automatically set the fresh token on pods - which could be used for Vault Authorization  
+
 | Environment Variable         | Option                          | Default Value                                   | Description                                                         |  
 |------------------------------|---------------------------------|-----------------------------------------------|---------------------------------------------------------------------|  
 | `ENV_VAULT_ADDR`             | `--vaultAddr=http://vault:8200` | `http://vault:8200`                           | Address of the Vault HashiCorp server.                              |  
@@ -23,7 +27,13 @@ Fetches credentials from Vault HashiCorp and supports the following configuratio
 
 
 #### 2. `ENV_SOURCE=dir`
-Supports multi-tenant environments, passetsicularly useful for local development. Configurations include:
+Tenants Environment variables stored on .env files on local directory. DotEnv file name format are following **.env.[tenant-id]**
+
+Supports multi-tenant environments, useful for local development.
+
+After start workers, environment resolver listen for updated for the directory and reload variables on some file changed.
+
+Configurations include:
 
 | Environment Variable | Option            | Default Value | Description                                                          |  
 |----------------------|-------------------|---------------|----------------------------------------------------------------------|  
@@ -32,9 +42,10 @@ Supports multi-tenant environments, passetsicularly useful for local development
 
 #### 3. `ENV_SOURCE=file`
 Supports a single-tenant environment. This configuration directly references the path to a `.env` file.
+Automatically reload workers on file change, no need to restart server.
 
 | Environment Variable | Option            | Default Value | Description                                      |  
 |----------------------|-------------------|---------------|------------------------------------------------|  
 | `ENV_FILE`           | `--envFile=./.env` | `./.env`     | Path to the project's `.env` file.             |  
 
-[Menu](#components)
+[Menu](../README.md#documentation) &nbsp; &nbsp;  [Top](#top)

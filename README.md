@@ -22,7 +22,7 @@ It is an OpenSwoole wrapper designed to provide a high-performance, multi-tenant
           bucket.
 
 2. **High Performance**:
-    - Pre-boot Laravel application in **Single-Tenant Mode**, reducing response delay by up to 80ms.
+    - Pre-boot Laravel application in **Single-Tenant Mode**, reducing response delay by up to 20ms.
     - **Process Isolation**: Each request is executed in a separate process using the `pcntl` extension.
 
 3. **Unified Queue Workers and Scheduler**:
@@ -42,11 +42,9 @@ It is an OpenSwoole wrapper designed to provide a high-performance, multi-tenant
 ## Requirements
 
 - **PHP**: >= 8.2
-- **PHP Extensions**: `openswoole`, `inotify`, `apcu`, `sysvmsg`
-- **Composer**: Installed globally
+- **PHP Extensions**: `openswoole`, `inotify`, `apcu`, `sysvmsg`, `pcntl`, `redis`
 - **Environment Variables Source**: Vault, file-based, or directory-based configurations supported
 - **System Utilities**: `bash`, `curl`
-- **Permissions**: Necessary permissions for the configured directories and Vault
 
 ---
 
@@ -54,24 +52,26 @@ It is an OpenSwoole wrapper designed to provide a high-performance, multi-tenant
 
 1. **[Installation](documentation/01_installation.md)**
     - [Composer](documentation/01_installation.md#composer-install) 
-    - [Download Binary File](documentation/01_installation.md#download-binary-file)
+    - [Download Binary File](documentation/01_installation.md#d)
     - [Docker Image](documentation/01_installation.md#docker-image)
 2. **[Server](documentation/02_server.md)**
     - [How it works...](documentation/02_server.md#how-it-works)
     - [Commands](documentation/02_server.md#commands)
-    - [Configuration (Options and Environment Variables)](documentation/02_server.md#configuration)
-3. **[S3-Proxy](documentation/03_s3-proxy.md)
+    - [Configuration](documentation/02_server.md#configuration)
+3. **[S3-Proxy](documentation/03_s3-proxy.md)**
     - [How it works...](documentation/03_s3-proxy.md#how-it-works)
-    - [Commands](#commands)
-    - [Configuration (Options and Environment Variables)](#s3-proxy-configuration-options-and-environment-variables)
-4. **[Queue](#queue)**
-    - [Commands](#queue-commands)
-    - [Configuration (Options and Environment Variables)](#queue-configuration-options-and-environment-variables)
-5. **[Scheduler](#scheduler)**
-    - [Commands](#scheduler-commands)
-    - [Configuration (Options and Environment Variables)](#scheduler-configuration-options-and-environment-variables)
-6. **[Environment Source and Resolvers](#env-source)**
-7. **[Bash Helpers](#environment-helpers)**
+    - [Commands](documentation/03_s3-proxy.md#commands)
+    - [Configuration](documentation/03_s3-proxy.md#configuration)
+4. **[Queue](documentation/04_queue.md)**
+   - [How it works...](documentation/04_queue.md#how-it-works)
+   - [Commands](documentation/04_queue.md#commands)
+   - [Configuration](documentation/04_queue.md#configuration)
+5. **[Scheduler](documentation/05_scheduler.md)**
+    - [How it works...](documentation/05_scheduler.md#how-it-works)
+    - [Commands](documentation/05_scheduler.md#commands)
+    - [Configuration](documentation/05_scheduler.md#configuration)
+6. **[Environment Source and Resolvers](documentation/06_environment-source-tenant-resolver.md)**
+7. **[Multi-Tenant Helpers](documentation/07_helpers.md)**
 
 ---
 

@@ -1,3 +1,5 @@
+[Back to Menu](../README.md#documentation)<a id='top'></a>
+
 ### **Scheduler**
 
 #### **Description**
@@ -9,6 +11,19 @@ The Scheduler component facilitates the execution of periodic tasks within a mul
 - Executes scheduled tasks across multiple tenants.
 - Supports isolated task execution for each tenant.
 - Compatible with various environment sources, including Vault and directory-based configurations.
+
+#### **How It works**
+
+- On execution start scheduler load all tenants environment variables from ENV SOURCE and spawn multiple child processes.
+- Each of child process wait for next minute and start `artisan scheduler:run` on random order of tenants. Each command execute of the child processes pnctl fork to isolate the application.
+- Before execution of tenant's command scheduler set the mutex for that tenant which will expire on next minute
+- After all tenants scheduler execution complete - waiting for next minute to repeat the calls 
+
+> <span style="color:orange;">**WARNING**</span> 
+> 
+> Avoid long-running scheduled commands on your Console/Kernel.php file because it could block the scheduler and cause some tenants missing minutes
+> 
+> Dispatch all long-running commands to queue. 
 
 #### **Commands**
 
@@ -37,3 +52,4 @@ The Scheduler component facilitates the execution of periodic tasks within a mul
 ### **Usages**
 
 
+[Menu](../README.md#documentation) &nbsp; &nbsp;  [Top](#top)

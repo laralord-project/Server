@@ -21,8 +21,9 @@ The main process periodically refreshes tenants' environment configurations to e
 
 - Unified multi-tenant queue processing.
 - Supports task-specific isolation.
-- Tenants can use different queue drivers.
+- Tenants could use different queue drivers, servers.   
 - Dynamic synchronization through Redis mutex.
+- Horizontal scaling the queue worker. You could scale the worker instances based on the real server load - not the number of tenants.
 
 #### **Commands**
 
