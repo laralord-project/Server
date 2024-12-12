@@ -2,10 +2,24 @@
 [![Test](https://github.com/laralord-project/server/actions/workflows/test.yaml/badge.svg?branch=main)](https://github.com/laralord-project/server/actions/workflows/test.yaml)
 
 
-# <img src="assets/logo.png" width="28" alt="LaraLord Server" >  &nbsp; Laralord Project - Server
+# <img src="assets/logo.png" width="34" alt="LaraLord Server" >  &nbsp; LaraLord Project - Server
 
-Laralord enables multi-tenancy for any stateless Laravel application without requiring code updates.
-It is an OpenSwoole wrapper designed to provide a high-performance, multi-tenant server setup for Laravel Application.
+Laralord enables multi-tenancy for any stateless Laravel application without requiring code modifications.
+It is an OpenSwoole wrapper designed to provide a high-performance, multi-tenant server setup for Laravel applications.
+
+The main idea is to gain the benefits of a multi-tenant application without adding complexity to the development process.
+
+This project aims to separate tenant management from your application's business logic.
+
+You can serve a Laravel application developed with a single-tenant approach in a multi-tenant environment..    
+
+
+### What is Laravel?
+
+> Laravel is an open source PHP framework for web application development.
+
+[Overview of Laravel](https://laravel.com/)
+Trademarks: The respective trademarks mentioned in the offering are owned by the respective companies, and use of them does not imply any affiliation or endorsement.
 
 ---
 
