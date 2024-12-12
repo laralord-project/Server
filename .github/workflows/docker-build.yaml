@@ -42,14 +42,25 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Build and push Docker Image alpine
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          build-args: APP_VERSION=${{env.APP_VERSION}}
+          file: deploy/alpine/Dockerfile
+          tags: |
+            ${{ secrets.DOCKER_REGISTRY }}:${{ env.APP_VERSION }}-alpine
+        env:
+          APP_VERSION: ${{ env.APP_VERSION }}
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           push: true
           build-args: APP_VERSION=${{env.APP_VERSION}}
           tags: |
-            ${{ secrets.DOCKER_REGISTRY }}:${{ env.APP_VERSION }}
             ${{ secrets.DOCKER_REGISTRY }}:latest
+            ${{ secrets.DOCKER_REGISTRY }}:${{ env.APP_VERSION }}
         env:
           APP_VERSION: ${{ env.APP_VERSION }}
         if: ${{ env.IS_PRERELEASE == 'false' }}
@@ -64,28 +75,3 @@ jobs:
         env:
           APP_VERSION: ${{ env.APP_VERSION }}
         if: ${{ env.IS_PRERELEASE == 'true' }}
-
-      - name: Build and push Docker Image alpine
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          build-args: APP_VERSION=${{env.APP_VERSION}}
-          file: deploy/alpine/Dockerfile
-          tags: |
-            ${{ secrets.DOCKER_REGISTRY }}:${{ env.APP_VERSION }}-alpine
-        env:
-          APP_VERSION: ${{ env.APP_VERSION }}
-        if: ${{ env.IS_PRERELEASE == 'true' }}
-
-      - name: Build and push Docker Image alpine latest
-        uses: docker/build-push-action@v6
-        with:
-          push: true
-          file: deploy/alpine/Dockerfile
-          build-args: APP_VERSION=${{env.APP_VERSION}}
-          tags: |
-            ${{ secrets.DOCKER_REGISTRY }}:${{ env.APP_VERSION }}-alpine
-            ${{ secrets.DOCKER_REGISTRY }}:alpine-latest
-        env:
-          APP_VERSION: ${{ env.APP_VERSION }}
-        if: ${{ env.IS_PRERELEASE == 'false' }}

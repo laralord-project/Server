@@ -1,7 +1,8 @@
 
 [![Test](https://github.com/laralord-project/server/actions/workflows/test.yaml/badge.svg?branch=main)](https://github.com/laralord-project/server/actions/workflows/test.yaml)
 ![GitHub Release](https://img.shields.io/github/v/release/laralord-project/server?logo=github&label=Last%20Release&color=orange)
-![Docker Image Version](https://img.shields.io/docker/v/laralordproject/server?logo=docker&label=Docker%20Image&color=green)
+![Docker Image Version](https://img.shields.io/docker/v/laralordproject/server?logo=docker&label=Docker%20Image&link=https%3A%2F%2Fhub.docker.com%2Fr%2Flaralordproject%2Fserver)
+
 
 
 
