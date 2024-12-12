@@ -70,7 +70,7 @@ jobs:
         with:
           push: true
           build-args: APP_VERSION=${{env.APP_VERSION}}
-          file: deploy/apline/Dockerfile
+          file: deploy/alpine/Dockerfile
           tags: |
             ${{ secrets.DOCKER_REGISTRY }}:${{ env.APP_VERSION }}-alpine
         env:
@@ -81,7 +81,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          file: deploy/apline/Dockerfile
+          file: deploy/alpine/Dockerfile
           build-args: APP_VERSION=${{env.APP_VERSION}}
           tags: |
             ${{ secrets.DOCKER_REGISTRY }}:${{ env.APP_VERSION }}-alpine

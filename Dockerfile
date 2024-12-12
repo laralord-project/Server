@@ -1,4 +1,5 @@
 FROM php:8.2.26-cli AS base
+ARG NODE_VERSiON=20
 
 RUN groupadd -g 1000 www
 RUN useradd -u 1000 -ms /bin/bash -g www www
@@ -16,7 +17,7 @@ RUN install-php-extensions gd pdo_pgsql	pdo_mysql mbstring zip exif pcntl
 RUN install-php-extensions inotify apcu sysvmsg pcntl openswoole redis @composer > /dev/null
 
 # Add Node.js repository and install Node.js (which includes npm)
-RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash - && \
+RUN curl -fsSL https://deb.nodesource.com/setup_$NODE_VERSiON.x | bash - && \
     apt-get install -yq nodejs && \
     rm -rf /var/lib/apt/lists/*
 
