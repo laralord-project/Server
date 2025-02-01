@@ -18,8 +18,8 @@ class ServerWorker extends WorkerAbstract implements WorkerContract
     use ForksManager;
 
     /**
-     * @param  Environment  $env
-     * @param  string  $shouldWarmUp
+     * @param Environment $env
+     * @param string $shouldWarmUp
      */
     public function __construct(protected Environment $env, public string $shouldWarmUp = '/')
     {
@@ -60,21 +60,26 @@ class ServerWorker extends WorkerAbstract implements WorkerContract
             try {
                 Log::info(
                     "{$request->server['request_method']} {$request->server['request_uri']}",
-                    ['forks_count'=> $this->forkPids->count()]
+                    ['forks_count' => $this->forkPids->count()]
                 );
-                Log::debug('Headers: ', $request->header);
-                Log::debug('Data: '.$request->rawContent());
+
                 $this->cleanZombieProcesses();
 
                 if (!$this->waitForForkRelease()) {
-                    Log::warning('Max worker fork reached');
+                    Log::warning('Max worker forks reached');
                     $response->status('503', 'Max Forks Limit Reached');
                     $response->end();
 
                     return;
                 }
 
-                $response->detach();
+                // workaround for the issue with tmpfiles clean
+                // after main process request execution complete
+                $waitForResponse = (bool)$request->tmpfiles;
+
+                if (!$waitForResponse) {
+                    $response->detach();
+                }
 
                 // processing request on forked process
                 $pid = $this->isolate(function () use ($request, $response) {
@@ -90,9 +95,12 @@ class ServerWorker extends WorkerAbstract implements WorkerContract
                     $symfonyResponse = $kernel->handle($symfonyRequest);
                     $this->respond($symfonyResponse, $response);
                     $kernel->terminate($symfonyRequest, $symfonyResponse);
-                }, wait: false);
+                }, wait: $waitForResponse);
 
-                $this->registerFork($pid);
+                if (!$waitForResponse) {
+                    $this->registerFork($pid);
+                }
+
             } catch (\Throwable $e) {
                 Log::error($e);
             }
