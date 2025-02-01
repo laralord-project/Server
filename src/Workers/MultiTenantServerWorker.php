@@ -72,9 +72,15 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
     public function getRequestHandler(): \Closure
     {
         return function (Request $request, Response $response) {
-            $response->detach();
+            // workaround for the issue with tmpfiles clean
+            // after main process request execution complete
+            $waitForResponse = (bool)$request->tmpfiles;
 
-            $forkPid = $this->isolate(function () use ($request, $response) {
+            if (!$waitForResponse) {
+                $response->detach();
+            }
+
+            $pid = $this->isolate(function () use ($request, $response) {
                 Log::$logger = Log::$logger->withName("{$this->name}-{$this->workerId}-fork-" . \getmypid());
                 $this->request = $request;
                 $this->response = $response = Response::create($response->fd);
@@ -119,9 +125,11 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
                     Log::error($e);
                     $response->end('Request Failed');
                 }
-            }, wait: false);
+            }, wait: $waitForResponse);
 
-            $this->registerFork($forkPid);
+            if (!$waitForResponse) {
+                $this->registerFork($pid);
+            }
         };
     }
 

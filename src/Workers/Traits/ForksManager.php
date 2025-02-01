@@ -103,7 +103,8 @@ trait ForksManager
             $result = pcntl_waitpid($pid, $status, WNOHANG);
 
             if ($result == -1) {
-                Log::error("Fork process check is abnormal: $result");
+                Log::error("Fork process with PID $pid check is abnormal: $result");
+                $this->forkPids->del($pid);
                 continue;
             } elseif ($result > 0) {
                 $zombiePids[] = $pid;
