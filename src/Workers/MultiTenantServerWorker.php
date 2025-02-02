@@ -7,7 +7,6 @@ use Server\Application\Environment;
 use Server\Exceptions\ResolverNotFoundException;
 use Server\Log;
 use Server\Workers\Traits\ForksManager;
-
 use function array_slice;
 use function key_exists;
 
@@ -38,8 +37,8 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
 
 
     /**
-     * @param  string  $basePath
-     * @param  string  $tenantKey
+     * @param string $basePath
+     * @param string $tenantKey
      *
      * @throws ResolverNotFoundException
      */
@@ -72,64 +71,70 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
     public function getRequestHandler(): \Closure
     {
         return function (Request $request, Response $response) {
-            // workaround for the issue with tmpfiles clean
-            // after main process request execution complete
-            $waitForResponse = (bool)$request->tmpfiles;
+            // workaround from multi process worker -
+            // hide the uploaded files from openswoole garbage collector
+            $hiddenFiles = $this->hideUploadedFiles($request);
 
-            if (!$waitForResponse) {
-                $response->detach();
-            }
+            $pid = $this->isolate(
+                function () use ($request, $response, $hiddenFiles) {
+                    Log::$logger = Log::$logger->withName("{$this->name}-{$this->workerId}-fork-" . \getmypid());
 
-            $pid = $this->isolate(function () use ($request, $response) {
-                Log::$logger = Log::$logger->withName("{$this->name}-{$this->workerId}-fork-" . \getmypid());
-                $this->request = $request;
-                $this->response = $response = Response::create($response->fd);
-
-                Log::info("{$request->getMethod()}", $request->server);
-                Log::debug("HEADERS:", $request->header);
-                Log::debug('QUERY DATA:', $request->get ?: []);
-                Log::debug('POST DATA:', $request->post ?: []);
-
-                try {
-                    $envKey = $this->resolveRequestTenant();
-
-                    if (!$envKey) {
-                        $this->abort(404, "Page Not Found");
-
-                        return;
+                    if ($hiddenFiles) {
+                        \usleep(100);
+                        $this->restoreHiddenFiles($hiddenFiles);
                     }
 
-                    $env = Environment::find($envKey);
-                    if (!$env) {
-                        $this->abort(404, "Tenant Not Found");
+                    $this->request = $request;
+                    $this->response = $response = Response::create($response->fd);
 
-                        return;
+                    Log::info("{$request->getMethod()}", $request->server);
+                    Log::debug("HEADERS:", $request->header);
+                    Log::debug('QUERY DATA:', $request->get ?: []);
+                    Log::debug('POST DATA:', $request->post ?: []);
+
+                    try {
+                        $envKey = $this->resolveRequestTenant();
+
+                        if (!$envKey) {
+                            $this->abort(404, "Page Not Found");
+
+                            return;
+                        }
+
+                        $env = Environment::find($envKey);
+                        if (!$env) {
+                            $this->abort(404, "Tenant Not Found");
+
+                            return;
+                        }
+
+                        $_ENV = $env->env();
+                        $this->createApplication();
+                        define('LARAVEL_START', microtime(true));
+
+                        // Transform the request to symfony request
+                        $symfonyRequest = $this->transformRequest($request);
+
+                        $kernel = $this->app->make($this->getProjectClass("@Contracts\\Http\\Kernel"));
+                        $symfonyResponse = $kernel->handle($symfonyRequest);
+                        $symfonyResponse->header('Server', 'Laralord');
+
+                        $this->respond($symfonyResponse, $response);
+                        $kernel->terminate($symfonyRequest, $symfonyResponse);
+                        Log::debug('Memory usage: ' . \memory_get_usage());
+                        Log::debug('Memory usage real: ' . \memory_get_usage(true));
+                    } catch (\Throwable $e) {
+                        Log::error($e);
+                        $response->end('Request Failed');
                     }
+                },
+                wait: false,
+                finalize: $this->finalize($request)
+            );
 
-                    $_ENV = $env->env();
-                    $this->createApplication();
-                    define('LARAVEL_START', microtime(true));
 
-                    // Transform the request to symfony request
-                    $symfonyRequest = $this->transformRequest($request);
+            $this->registerFork($pid);
 
-                    $kernel = $this->app->make($this->getProjectClass("@Contracts\\Http\\Kernel"));
-                    $symfonyResponse = $kernel->handle($symfonyRequest);
-                    $symfonyResponse->header('Server', 'Laralord');
-
-                    $this->respond($symfonyResponse, $response);
-                    $kernel->terminate($symfonyRequest, $symfonyResponse);
-                    Log::debug('Memory usage: ' . \memory_get_usage());
-                    Log::debug('Memory usage real: ' . \memory_get_usage(true));
-                } catch (\Throwable $e) {
-                    Log::error($e);
-                    $response->end('Request Failed');
-                }
-            }, wait: $waitForResponse);
-
-            if (!$waitForResponse) {
-                $this->registerFork($pid);
-            }
         };
     }
 
@@ -142,7 +147,7 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
         Log::notice('Resolving tenants', $this->tenantResolvers);
         // iterating the resolvers till first found
         foreach ($this->tenantResolvers as $resolverParts) {
-            Log::debug('Processing '.$resolverParts);
+            Log::debug('Processing ' . $resolverParts);
 
             $resolverParts = explode('.', $resolverParts);
             $source = $resolverParts[0];
@@ -199,7 +204,7 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
             $result = $method();
 
             if ($result) {
-                Log::info("Tenant ID $result resolved by $source: ".\implode('.', $resolverParts));
+                Log::info("Tenant ID $result resolved by $source: " . \implode('.', $resolverParts));
 
                 return $result;
             }
@@ -241,7 +246,7 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
 
     /**
      * @param $subject
-     * @param  string|array  $path
+     * @param string|array $path
      *
      * @return string|null
      */
@@ -282,7 +287,7 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
                 }
 
                 if (!key_exists($key, $subject) && !key_exists(\strtolower($key), $subject)
-                    || (\is_numeric($key) && !isset($subject[(int) $key]))
+                    || (\is_numeric($key) && !isset($subject[(int)$key]))
                 ) {
                     return null;
                 }
@@ -299,8 +304,8 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
 
 
     /**
-     * @param  int  $status
-     * @param  string  $message
+     * @param int $status
+     * @param string $message
      *
      * @return void
      */
