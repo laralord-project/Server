@@ -79,7 +79,7 @@ abstract class WorkerAbstract
             );
 
             Log::debug('Application wormed up with code: ', [
-                'status'  => $symfonyResponse->getStatusCode(),
+                'status' => $symfonyResponse->getStatusCode(),
                 'content' => $symfonyResponse->getContent(),
             ]);
         } catch (\Throwable $e) {
@@ -95,7 +95,8 @@ abstract class WorkerAbstract
     }
 
 
-    public function isolate(\Closure $action, int $exitSignal = \SIGKILL, bool $wait = true): int
+    public function isolate(\Closure $action, int $exitSignal = \SIGKILL, bool $wait = true,
+        \Closure $finalize = null): int
     {
         $childPid = \pcntl_fork();
 
@@ -105,15 +106,23 @@ abstract class WorkerAbstract
 
         // executing closure method on new created work
         if ($childPid === 0) {
-            cli_set_process_title(\cli_get_process_title().':fork');
+            cli_set_process_title(\cli_get_process_title() . ':fork');
             try {
                 $action();
             } catch (\Throwable $e) {
                 Log::error($e);
-            }
-            finally {
+            } finally {
+                if ($finalize) {
+                    try {
+                        $finalize();
+                    } catch (\Throwable $e) {
+                        Log::error($e);
+                    }
+                }
+
                 Process::kill(\getmypid(), $exitSignal);
-                throw new \Exception("The child process".\getmypid()." didn't exit");
+
+                throw new \Exception("The child process" . \getmypid() . " didn't exit");
             }
         }
 
@@ -152,7 +161,7 @@ abstract class WorkerAbstract
 
     /**
      * @param            $symfonyResponse
-     * @param  Response  $response
+     * @param Response $response
      *
      * @return void
      */
@@ -202,7 +211,7 @@ abstract class WorkerAbstract
     /**
      * Preload the bootstrap code to memory to reduce the number of disk operations
      *
-     * @param  string  $basePath
+     * @param string $basePath
      * @param          $force
      *
      * @return false|void
@@ -219,7 +228,7 @@ abstract class WorkerAbstract
 
 
     /**
-     * @param  Request  $request
+     * @param Request $request
      *
      * @return @\Illuminate\Http\Request
      */
@@ -257,8 +266,8 @@ abstract class WorkerAbstract
     /**
      * Transforms $_SERVER array.
      *
-     * @param  array  $server
-     * @param  array  $header
+     * @param array $server
+     * @param array $header
      *
      * @return array
      */
@@ -282,12 +291,63 @@ abstract class WorkerAbstract
                 $_SERVER[$key] = $value;
             }
 
-            $key = 'HTTP_'.$key;
+            $key = 'HTTP_' . $key;
 
             // Set the header in the $_SERVER superglobal
             $_SERVER[$key] = $value;
         }
 
         return $_SERVER;
+    }
+
+
+    /**
+     * @param Request $request
+     * @return array
+     */
+    protected function hideUploadedFiles(Request $request): array
+    {
+        if (!$request->files) {
+            return [];
+        }
+
+        $hidden = [];
+
+        \array_walk($request->tmpfiles, function (string $file) use (&$hidden) {
+            $newPath = "/tmp/laralord.upfile." . uniqid();
+            if (rename($file, $newPath)) {
+                $hidden[] = ['tmp_original' => $file, 'tmp_moved' => $newPath];
+            } else {
+                Log::error("Failed to move file: {$file}");
+            }
+        });
+
+        return $hidden;
+    }
+
+    protected function restoreHiddenFiles(array $files): void
+    {
+        foreach ($files as $key => $fileMap) {
+            if (!rename($fileMap['tmp_moved'], $fileMap['tmp_original'])) {
+                Log::error('Files to move back the file', $fileMap);
+            }
+        }
+    }
+
+    /**
+     * Finalize the request - garbage collecting
+     *
+     * @param Request $request
+     * @return \Closure
+     */
+    protected function finalize(Request $request): \Closure
+    {
+        return function () use ($request) {
+            if (!$request->tmpfiles) {
+                return;
+            }
+
+            \array_walk($request->tmpfiles, fn($file) => \file_exists($file) && \unlink($file));
+        };
     }
 }
