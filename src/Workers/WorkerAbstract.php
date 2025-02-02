@@ -325,6 +325,12 @@ abstract class WorkerAbstract
         return $hidden;
     }
 
+    /**
+     * Restore hidden from garbage collector files
+     *
+     * @param array $files
+     * @return void
+     */
     protected function restoreHiddenFiles(array $files): void
     {
         foreach ($files as $key => $fileMap) {
