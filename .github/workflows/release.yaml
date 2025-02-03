@@ -46,7 +46,7 @@ jobs:
         uses: shivammathur/cache-extensions@v1
         with:
           php-version: 8.2
-          extensions: inotify, apcu, sysvmsg, pcntl, openswoole, redis
+          extensions: inotify, apcu, sysvmsg, pcntl, openswoole-25.2.0, redis
           key: php-ext-key-1
 
       - name: Cache extensions
@@ -59,8 +59,8 @@ jobs:
       - name: Set Up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.2'
-          extensions: inotify, apcu, sysvmsg, pcntl, openswoole, redis
+          php-version: 8.2
+          extensions: inotify, apcu, sysvmsg, pcntl, openswoole-25.2.0, redis
           ini-values: variables_order=EGPCS
           tools: composer, phpunit
 

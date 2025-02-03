@@ -73,37 +73,41 @@ class ServerWorker extends WorkerAbstract implements WorkerContract
                     return;
                 }
 
-                // workaround for the issue with tmpfiles clean
-                // after main process request execution complete
-                $waitForResponse = (bool)$request->tmpfiles;
+                $response->detach();
+                // workaround from multi process worker -
+                // hide the uploaded files from openswoole garbage collector
+                $hiddenFiles = $this->hideUploadedFiles($request);
 
-                if (!$waitForResponse) {
-                    $response->detach();
-                }
+                $pid = $this->isolate(
+                    function () use ($request, $response, $hiddenFiles) {
+                        if ($hiddenFiles) {
+                            \usleep(100);
+                            $this->restoreHiddenFiles($hiddenFiles);
+                        }
 
-                // processing request on forked process
-                $pid = $this->isolate(function () use ($request, $response) {
-                    $response = Response::create($response->fd);
-                    $_ENV = $this->env->env();
+                        $response = Response::create($response->fd);
+                        $_ENV = $this->env->env();
 
-                    define('LARAVEL_START', microtime(true));
-                    // Transform the request to symfony request
-                    $symfonyRequest = $this->transformRequest($request);
+                        define('LARAVEL_START', microtime(true));
+                        // Transform the request to symfony request
+                        $symfonyRequest = $this->transformRequest($request);
 
-                    $kernel = $this->app->make($this->getProjectClass("@Contracts\\Http\\Kernel"));
+                        $kernel = $this->app->make($this->getProjectClass("@Contracts\\Http\\Kernel"));
 
-                    $symfonyResponse = $kernel->handle($symfonyRequest);
-                    $this->respond($symfonyResponse, $response);
-                    $kernel->terminate($symfonyRequest, $symfonyResponse);
-                }, wait: $waitForResponse);
+                        $symfonyResponse = $kernel->handle($symfonyRequest);
+                        $this->respond($symfonyResponse, $response);
+                        $kernel->terminate($symfonyRequest, $symfonyResponse);
+                    },
+                    wait: false,
+                    finalize: $this->finalize($request)
+                );
 
-                if (!$waitForResponse) {
-                    $this->registerFork($pid);
-                }
-
+                $this->registerFork($pid);
             } catch (\Throwable $e) {
                 Log::error($e);
             }
         };
     }
+
+
 }
