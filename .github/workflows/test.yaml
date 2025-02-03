@@ -51,7 +51,7 @@ jobs:
         with:
           php-version: '8.2'
           ini-values: variables_order=EGPCS
-          extensions: inotify, apcu, sysvmsg, pcntl, openswoole, redis
+          extensions: inotify, apcu, sysvmsg, pcntl, openswoole-25.2.0, redis
           tools: composer, phpunit,
 
       - name: Install Composer Dependencies
