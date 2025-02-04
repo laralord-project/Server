@@ -2,7 +2,7 @@
 
 namespace Server;
 
-use OpenSwoole\{HTTP\Server as HttpServer, Server as SwooleServer};
+use Swoole\{HTTP\Server as HttpServer, Server as SwooleServer};
 use Server\Configurator\ConfiguratorContract;
 use Server\Configurator\ServerConfigurator;
 use Server\EnvironmentResolvers\{EnvResolverContract, FileEnvResolver, MultiTenantResolverAbstract, VaultEnvResolver};
@@ -16,13 +16,13 @@ use Swoole\Timer;
  *
  * @author  Vitalii Liubimov <vitalii@liubimov.org>
  * @package Server
- * @property string $host
- * @property int $port
- * @property bool $watch
- * @property string $logLevel
- * @property string $basePath
- * @property string $configEnvFile
- * @property string $mode
+ * @property string   $host
+ * @property int      $port
+ * @property bool     $watch
+ * @property string   $logLevel
+ * @property string   $basePath
+ * @property string   $configEnvFile
+ * @property string   $mode
  * @property string[] $watchTargets
  *
  * @mixin ServerConfigurator
@@ -71,7 +71,7 @@ class Server
      */
     public function start()
     {
-        $this->server = new HttpServer($this->host, $this->port, SwooleServer::POOL_MODE);
+        $this->server = new HttpServer($this->host, $this->port, \SWOOLE_BASE);
         $this->initEnvResolver()
             ->common([
                 'APP_BASE_PATH'          => $this->basePath,
@@ -111,8 +111,8 @@ class Server
         }
 
         if (!\method_exists($this->envResolver, 'storeToEnvFile')) {
-            throw new \Exception("Environment resolver ".\get_class($this->envResolver)
-                ."doesn't support this operation");
+            throw new \Exception("Environment resolver " . \get_class($this->envResolver)
+                . "doesn't support this operation");
         }
 
         $envFile = $envFile ?: $this->configurator->envSourceConfig['env_file'];

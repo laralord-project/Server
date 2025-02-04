@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -yq build-essential libpng-dev libjpeg62-t
 # Install Laravel dependencies
 RUN install-php-extensions gd pdo_pgsql	pdo_mysql mbstring zip exif pcntl
 # Install LaraLord dependencies
-RUN install-php-extensions inotify apcu sysvmsg pcntl openswoole-^25@stable redis @composer > /dev/null
+RUN install-php-extensions inotify apcu sysvmsg pcntl swoole redis @composer > /dev/null
 
 # Add Node.js repository and install Node.js (which includes npm)
 RUN curl -fsSL https://deb.nodesource.com/setup_$NODE_VERSiON.x | bash - && \

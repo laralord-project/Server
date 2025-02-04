@@ -2,7 +2,7 @@
 
 namespace Server\Workers;
 
-use OpenSwoole\Http\{Request, Response};
+use Swoole\Http\{Request, Response};
 use Server\Application\Environment;
 use Server\Exceptions\ResolverNotFoundException;
 use Server\Log;
@@ -46,8 +46,7 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
         protected string $basePath,
         protected string $tenantKey = 'header.TENANT-ID',
         protected $fallbackTenantId = ''
-    )
-    {
+    ) {
         $this->mapResolvers();
     }
 

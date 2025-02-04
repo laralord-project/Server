@@ -2,7 +2,7 @@
 
 namespace Server\Application;
 
-use OpenSwoole\Table;
+use Swoole\Table;
 use phpDocumentor\Reflection\Types\This;
 use Server\Log;
 

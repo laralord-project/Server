@@ -5,7 +5,7 @@ namespace Server;
 use Aws\Handler\GuzzleV6\GuzzleHandler;
 use Aws\S3\S3Client;
 use GuzzleHttp\{Client, Handler\CurlHandler, HandlerStack};
-use OpenSwoole\{HTTP\Server as HttpServer, Table};
+use Swoole\{HTTP\Server as HttpServer, Table};
 use Server\Configurator\{ConfiguratorContract, S3ProxyConfigurator};
 use Server\Traits\HasConfigurator;
 use Server\Workers\{S3ProxyWorker, WorkerContract as Worker};

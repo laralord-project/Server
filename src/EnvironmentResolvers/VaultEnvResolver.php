@@ -5,7 +5,7 @@ namespace Server\EnvironmentResolvers;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
-use OpenSwoole\Timer;
+use Swoole\Timer;
 use Server\Application\Environment;
 use Server\Configurator\ServerConfigurator;
 use Server\EnvironmentResolvers\Traits\CommonVariables;

@@ -2,7 +2,7 @@
 
 namespace Server;
 
-use OpenSwoole\{Event, Process, Timer};
+use Swoole\{Event, Process, Timer};
 use Server\Configurator\ConfiguratorContract;
 use Server\EnvironmentResolvers\{DirectoryEnvResolver, EnvResolverContract, VaultEnvResolver};
 use Server\Ipc\QueueChannel;

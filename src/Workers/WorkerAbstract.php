@@ -2,7 +2,7 @@
 
 namespace Server\Workers;
 
-use OpenSwoole\{Http\Request, Http\Response, Http\Server, Process};
+use Swoole\{Http\Request, Http\Response, Http\Server, Process};
 use Server\Log;
 use Server\Traits\ProjectClassWrapper;
 use Swoole\Process\Pool;

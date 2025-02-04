@@ -2,7 +2,7 @@
 
 namespace Server\Workers\Traits;
 
-use OpenSwoole\{ Table, Timer};
+use Swoole\{ Table, Timer};
 use Server\Log;
 use Server\Workers\MultiTenantServerWorker;
 use Server\Workers\ServerWorker;

@@ -2,7 +2,7 @@
 
 namespace Server\Workers;
 
-use OpenSwoole\Process;
+use Swoole\Process;
 use Server\Application\Environment;
 use Server\Log;
 

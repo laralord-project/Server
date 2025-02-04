@@ -2,7 +2,7 @@ services:
   server:
     build:
       dockerfile: Dockerfile
-      target: build
+      target: base
       args:
         - APP_VERSION=${APP_VERSION:-0.1.0-local}
     environment:

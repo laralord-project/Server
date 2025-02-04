@@ -3,7 +3,7 @@
 namespace Server\EnvironmentResolvers;
 
 use Dotenv\Dotenv;
-use OpenSwoole\Timer;
+use Swoole\Timer;
 use Server\Application\Environment;
 use Server\EnvironmentResolvers\Traits\CommonVariables;
 use Server\EnvironmentResolvers\Traits\ExcludeVariables;

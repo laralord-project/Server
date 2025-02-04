@@ -5,8 +5,8 @@ namespace Server\Workers;
 use Aws\Result;
 use Aws\S3\Exception\S3Exception;
 use Aws\S3\S3Client;
-use OpenSwoole\Coroutine;
-use OpenSwoole\Table;
+use Swoole\Coroutine;
+use Swoole\Table;
 use Server\Log;
 use Swoole\Http\{Request, Response};
 
@@ -67,7 +67,7 @@ class S3ProxyWorker implements WorkerContract
             cli_set_process_title($this->name);
             Log::$logger = Log::$logger->withName($this->name);
             Log::notice('Started');
-            Coroutine::set(['hook_flags' => \OpenSwoole\Runtime::HOOK_ALL]);
+            Coroutine::set(['hook_flags' => \Swoole\Runtime::HOOK_ALL]);
         };
     }
 
