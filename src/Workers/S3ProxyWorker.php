@@ -9,7 +9,6 @@ use OpenSwoole\Coroutine;
 use OpenSwoole\Table;
 use Server\Log;
 use Swoole\Http\{Request, Response};
-use Server\S3ProxyServer;
 
 /**
  * Class S3ProxyWorker
@@ -35,7 +34,7 @@ class S3ProxyWorker implements WorkerContract
         //  any files like /test/test.json
         '/([\w\/-]+(?:\/[\w-]+)?\.[\w]{1,10})$/' => '$1',
         // list like locations /test or /test/
-        '/^((\/[\w\-;=]+)*\/?)$/' => '/index.html',
+        '/^((\/[\w\-;=]+)*\/?)$/'                => '/index.html',
     ];
 
     /**
@@ -45,9 +44,9 @@ class S3ProxyWorker implements WorkerContract
 
 
     /**
-     * @param  S3Client  $client
-     * @param  string    $bucket
-     * @param  string    $cacheDir
+     * @param S3Client $client
+     * @param string $bucket
+     * @param string $cacheDir
      */
     public function __construct(
         private S3Client $client,
@@ -90,14 +89,14 @@ class S3ProxyWorker implements WorkerContract
                 $response->end('Server Error');
             }
 
-            Log::debug('Request Completed:'.time());
+            Log::debug('Request Completed:' . time());
         };
     }
 
 
     /**
-     * @param  Request   $request
-     * @param  Response  $response
+     * @param Request $request
+     * @param Response $response
      *
      * @return void
      */
@@ -162,9 +161,9 @@ class S3ProxyWorker implements WorkerContract
 
 
     /**
-     * @param  string    $s3Path
-     * @param  Response  $response
-     * @param  bool      $catchExceptions
+     * @param string $s3Path
+     * @param Response $response
+     * @param bool $catchExceptions
      *
      * @return bool
      */
@@ -173,8 +172,8 @@ class S3ProxyWorker implements WorkerContract
         Log::debug("Proxy bucket {$this->bucket}: key: $s3Path");
         try {
             $options = [
-                'Bucket' => $this->bucket,
-                'Key' => $s3Path,
+                'Bucket'     => $this->bucket,
+                'Key'        => $s3Path,
                 'x-amz-date' => gmdate('Ymd\THis\Z'),
             ];
             // Fetch the file from S3
@@ -220,8 +219,8 @@ class S3ProxyWorker implements WorkerContract
 
 
     /**
-     * @param  string  $location
-     * @param  string  $basePath
+     * @param string $location
+     * @param string $basePath
      *
      * @return string
      */
@@ -241,13 +240,13 @@ class S3ProxyWorker implements WorkerContract
 
 
     /**
-     * @param  string  $s3Path
+     * @param string $s3Path
      *
      * @return string
      */
     public function getCachePath(string $s3Path): string
     {
-        return "{$this->cacheDir}/".$this->getCacheKey($s3Path);
+        return "{$this->cacheDir}/" . $this->getCacheKey($s3Path);
     }
 
 
@@ -258,7 +257,7 @@ class S3ProxyWorker implements WorkerContract
 
 
     /**
-     * @param  string  $s3Path
+     * @param string $s3Path
      *
      * @return bool
      */
@@ -275,7 +274,7 @@ class S3ProxyWorker implements WorkerContract
 
 
     /**
-     * @param  string  $s3Path
+     * @param string $s3Path
      * @param          $content
      *
      * @return bool
@@ -289,12 +288,12 @@ class S3ProxyWorker implements WorkerContract
         unset($result['Body']);
         Log::debug("$s3Path result :", $result);
         $cacheData = [
-            's3_path' => $s3Path,
-            'content_type' => $result['ContentType'],
+            's3_path'        => $s3Path,
+            'content_type'   => $result['ContentType'],
             'content_length' => $result['ContentLength'],
-            'created_at' => \time(),
-            'last_usage_at' => time(),
-            'metadata' => json_encode($result),
+            'created_at'     => \time(),
+            'last_usage_at'  => time(),
+            'metadata'       => json_encode($result),
         ];
 
         Log::debug('Cache Data ', $cacheData);
@@ -308,8 +307,8 @@ class S3ProxyWorker implements WorkerContract
 
 
     /**
-     * @param  string    $s3Path
-     * @param  Response  $response
+     * @param string $s3Path
+     * @param Response $response
      *
      * @return bool
      */

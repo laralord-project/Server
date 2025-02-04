@@ -103,7 +103,7 @@ class Server
 
         $tenantKey = $this->configurator->envSourceConfig['tenant_id']
             ?: $this->configurator->envSourceConfig['vault_key']
-            ?: '';
+                ?: '';
 
         if (!$tenantKey) {
             Log::error('Tenant ID is not specified by ENV_TENANT_ID, ENV_VAULT_KEY env variable or \'--tenant_id=\' argument');
@@ -111,7 +111,8 @@ class Server
         }
 
         if (!\method_exists($this->envResolver, 'storeToEnvFile')) {
-            throw new \Exception("Environment resolver ".\get_class($this->envResolver)."doesn't support this operation");
+            throw new \Exception("Environment resolver ".\get_class($this->envResolver)
+                ."doesn't support this operation");
         }
 
         $envFile = $envFile ?: $this->configurator->envSourceConfig['env_file'];
@@ -138,7 +139,7 @@ class Server
 
         Log::info('Server Options: ', [$this->options]);
 
-        return (new MultiTenantServerWorker($this->basePath, $this->tenantKey))
+        return (new MultiTenantServerWorker($this->basePath, $this->tenantKey, $this->fallbackTenantId))
             ->setMaxForks($this->maxForks);
     }
 

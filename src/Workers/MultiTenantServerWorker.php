@@ -42,7 +42,11 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
      *
      * @throws ResolverNotFoundException
      */
-    public function __construct(protected string $basePath, protected string $tenantKey = 'header.TENANT-ID')
+    public function __construct(
+        protected string $basePath,
+        protected string $tenantKey = 'header.TENANT-ID',
+        protected $fallbackTenantId = ''
+    )
     {
         $this->mapResolvers();
     }
@@ -71,6 +75,22 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
     public function getRequestHandler(): \Closure
     {
         return function (Request $request, Response $response) {
+            Log::info(
+                "{$request->server['request_method']} {$request->server['request_uri']}",
+                ['forks_count' => $this->forkPids->count()]
+            );
+
+            $this->cleanZombieProcesses();
+
+            if (!$this->waitForForkRelease()) {
+                Log::warning('Max worker forks reached');
+                $response->status('503', 'Max Forks Limit Reached');
+                $response->end();
+
+                return;
+            }
+
+            $response->detach();
             // workaround from multi process worker -
             // hide the uploaded files from openswoole garbage collector
             $hiddenFiles = $this->hideUploadedFiles($request);
@@ -96,13 +116,16 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
                         $envKey = $this->resolveRequestTenant();
 
                         if (!$envKey) {
+                            Log::warning('Page not found');
                             $this->abort(404, "Page Not Found");
 
                             return;
                         }
 
                         $env = Environment::find($envKey);
+
                         if (!$env) {
+                            Log::warning('Tenant not found');
                             $this->abort(404, "Tenant Not Found");
 
                             return;
@@ -110,6 +133,7 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
 
                         $_ENV = $env->env();
                         $this->createApplication();
+                        Log::debug('Application created');
                         define('LARAVEL_START', microtime(true));
 
                         // Transform the request to symfony request
@@ -117,7 +141,8 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
 
                         $kernel = $this->app->make($this->getProjectClass("@Contracts\\Http\\Kernel"));
                         $symfonyResponse = $kernel->handle($symfonyRequest);
-                        $symfonyResponse->header('Server', 'Laralord');
+                        Log::debug('Response handle complete: ');
+//                        $symfonyResponse->header('Server', 'Laralord');
 
                         $this->respond($symfonyResponse, $response);
                         $kernel->terminate($symfonyRequest, $symfonyResponse);
@@ -125,16 +150,14 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
                         Log::debug('Memory usage real: ' . \memory_get_usage(true));
                     } catch (\Throwable $e) {
                         Log::error($e);
-                        $response->end('Request Failed');
+                        $response->end('Internal Server Error');
                     }
                 },
                 wait: false,
                 finalize: $this->finalize($request)
             );
 
-
             $this->registerFork($pid);
-
         };
     }
 
@@ -208,6 +231,10 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
 
                 return $result;
             }
+        }
+
+        if ($this->fallbackTenantId) {
+            return $this->fallbackTenantId;
         }
 
         return null;

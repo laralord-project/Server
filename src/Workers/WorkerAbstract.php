@@ -80,7 +80,7 @@ abstract class WorkerAbstract
 
             Log::debug('Application wormed up with code: ', [
                 'status' => $symfonyResponse->getStatusCode(),
-                'content' => $symfonyResponse->getContent(),
+//                'content' => $symfonyResponse->getContent(),
             ]);
         } catch (\Throwable $e) {
             Log::error($e);
@@ -191,9 +191,34 @@ abstract class WorkerAbstract
             );
         }
 
-        // Set content
-        $response->end($symfonyResponse->getContent());
+        // Chunked content writing
+        if ($response->isWritable()) {
+            $content = $symfonyResponse->getContent();
+            $contentSize = strlen($content);
+            $chunkSize = 400_000; // Adjust chunk size as needed
+//
+//            Log::debug('Content size:', ['size' => $contentSize]);
+//
+            for ($offset = 0; $offset < $contentSize; $offset += $chunkSize) {
+                $chunk = substr($content, $offset, $chunkSize);
+                if (!$response->write($chunk)) {
+                    Log::error('Failed to write response chunk');
+                    break; // Stop writing if there's an error
+                }
+            }
+//
+//            // Ensure response is closed after all chunks are sent
+            \usleep(100);
+            $response->close();
+//            $response->end($content);
+            Log::debug('Response fully sent:', ['size' => $contentSize]);
+
+        } else {
+            Log::error('Response instance is not writable');
+            $response->close();
+        }
     }
+
 
 
     public function createApplication()
