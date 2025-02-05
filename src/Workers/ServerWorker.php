@@ -63,27 +63,27 @@ class ServerWorker extends WorkerAbstract implements WorkerContract
                     ['forks_count' => $this->forkPids->count()]
                 );
 
-//                $this->cleanZombieProcesses();
+                $this->cleanZombieProcesses();
 
-//                if (!$this->waitForForkRelease()) {
-//                    Log::warning('Max worker forks reached');
-//                    $response->status('503', 'Max Forks Limit Reached');
-//                    $response->end();
-//
-//                    return;
-//                }
+                if (!$this->waitForForkRelease()) {
+                    Log::warning('Max worker forks reached');
+                    $response->status('503', 'Max Forks Limit Reached');
+                    $response->end();
 
-//                $response->detach();
+                    return;
+                }
+
+                $response->detach();
                 // workaround from multi process worker -
                 // hide the uploaded files from openswoole garbage collector
-//                $hiddenFiles = $this->hideUploadedFiles($request);
+                $hiddenFiles = $this->hideUploadedFiles($request);
 
-//                $pid = $this->isolate(
-//                    function () use ($request, $response, $hiddenFiles) {
-//                        if ($hiddenFiles) {
-//                            \usleep(100);
-//                            $this->restoreHiddenFiles($hiddenFiles);
-//                        }
+                $process = $this->isolate(
+                    function () use ($request, $response, $hiddenFiles) {
+                        if ($hiddenFiles) {
+                            \usleep(100);
+                            $this->restoreHiddenFiles($hiddenFiles);
+                        }
 
                         $response = Response::create($response->fd);
                         $_ENV = $this->env->env();
@@ -99,12 +99,11 @@ class ServerWorker extends WorkerAbstract implements WorkerContract
                         Log::info(get_class($symfonyResponse));
                         $this->respond($symfonyResponse, $response);
                         $kernel->terminate($symfonyRequest, $symfonyResponse);
-//                    },
-//                    wait: false,
-//                    finalize: $this->finalize($request)
-//                );
+                    },
+                    wait: false,
+                    finalize: $this->finalize($request)
+                );
 
-//                $this->registerFork($pid);
             } catch (\Throwable $e) {
                 Log::error($e);
             }

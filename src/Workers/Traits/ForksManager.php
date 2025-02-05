@@ -2,7 +2,7 @@
 
 namespace Server\Workers\Traits;
 
-use Swoole\{ Table, Timer};
+use Swoole\{Process, Table, Timer};
 use Server\Log;
 use Server\Workers\MultiTenantServerWorker;
 use Server\Workers\ServerWorker;
@@ -58,6 +58,7 @@ trait ForksManager
         $this->forkPids = new Table(1024);
         $this->forkPids->column('pid', Table::TYPE_INT, 32);
         $this->forkPids->column('started_at', Table::TYPE_FLOAT);
+        $this->forkPids->column('ended_at', Table::TYPE_FLOAT);
         $this->forkPids->create();
         $this->setForkCleanTimer();
     }
@@ -100,27 +101,13 @@ trait ForksManager
         foreach ($this->forkPids as $row) {
             $pid = $row['pid'];
 
-            $result = pcntl_waitpid($pid, $status, WNOHANG);
+           if ($row['completed_at']) {
+                Log::info('Fork Completed', $row);
+                if (Process::kill($pid, \SIGKILL)) {
+                    $this->forkPids->delete($pid);
+                }
 
-            if ($result == -1) {
-                Log::error("Fork process with PID $pid check is abnormal: $result");
-                $this->forkPids->del($pid);
-                continue;
-            } elseif ($result > 0) {
-                $zombiePids[] = $pid;
-                $this->forkPids->del($pid);
-                Log::debug('Child process exited');
-                continue;
-            };
-
-            $startedAt = $row['started_at'];
-
-            // TODO implement correct exit the forks by timeout in case OOM
-            // if(\microtime(true) > ($startedAt + $this->processTimout)) {
-            //     Log::warning('Worker Fork timeout - send SIGKILL process terminating');
-            //     Process::kill(\getmypid(), \SIGKILL);
-            //     $this->forkPids->del($pid);
-            // }
+           }
         }
 
         return $zombiePids;
@@ -153,7 +140,19 @@ trait ForksManager
      */
     public function registerFork(int $pid)
     {
-        $this->forkPids->set($pid, ['pid' => $pid, 'started_at' => \microtime(true)]);
+        $this->forkPids->set($pid, ['pid' => $pid, 'started_at' => \microtime(true), 'completed_at' => 0]);
+    }
+
+    public function markForkAsCompleted(int $pid) {
+        $process = $this->forkPids->get($pid);
+
+        if (!$process) {
+            return;
+        }
+        $process['completed_at'] = \microtime(true);
+
+        $this->forkPids->set($pid, $process);
+
     }
 
 

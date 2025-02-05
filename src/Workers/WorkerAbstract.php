@@ -5,11 +5,12 @@ namespace Server\Workers;
 use Swoole\{Http\Request, Http\Response, Http\Server, Process};
 use Server\Log;
 use Server\Traits\ProjectClassWrapper;
+use Server\Workers\Traits\ForksManager;
 use Swoole\Process\Pool;
 
 abstract class WorkerAbstract
 {
-    use ProjectClassWrapper;
+    use ProjectClassWrapper, ForksManager;
 
     /**
      * @var string|mixed
@@ -95,7 +96,37 @@ abstract class WorkerAbstract
     }
 
 
-    public function isolate(\Closure $action, int $exitSignal = \SIGKILL, bool $wait = true,
+    public function isolate(
+        \Closure $action,
+        int $exitSignal = \SIGKILL,
+        bool $wait = true,
+        \Closure $finalize = null
+    ) {
+        $process = new \Swoole\Process(function (Process $worker) use ($action, $finalize) {
+            \method_exists($this, 'registerFork') && $this->registerFork($worker->pid);
+
+            try {
+                // \Swoole\Coroutine::create($action);
+                $action();
+            } catch (\Throwable $e) {
+                echo($e->getMessage());
+            }
+            finally {
+                if ($finalize) {
+                    try {
+                        $finalize();
+                    } catch (\Throwable $e) {
+                        Log::error($e);
+                    }
+                }
+            }
+        }, true);
+        $process->start();
+
+        return $process;
+    }
+
+    public function isolatepcntl(\Closure $action, int $exitSignal = \SIGKILL, bool $wait = true,
         \Closure $finalize = null): int
     {
         $childPid = \pcntl_fork();
