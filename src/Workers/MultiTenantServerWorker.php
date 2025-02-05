@@ -95,7 +95,7 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
             // hide the uploaded files from openswoole garbage collector
             $hiddenFiles = $this->hideUploadedFiles($request);
 
-            $pid = $this->isolate(
+            $this->isolate(
                 function () use ($request, $response, $hiddenFiles) {
                     Log::$logger = Log::$logger->withName("{$this->name}-{$this->workerId}-fork-" . \getmypid());
 
@@ -142,7 +142,7 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
                         $kernel = $this->app->make($this->getProjectClass("@Contracts\\Http\\Kernel"));
                         $symfonyResponse = $kernel->handle($symfonyRequest);
                         Log::debug('Response handle complete: ');
-//                        $symfonyResponse->header('Server', 'Laralord');
+                        $symfonyResponse->header('Server', 'Laralord');
 
                         $this->respond($symfonyResponse, $response);
                         $kernel->terminate($symfonyRequest, $symfonyResponse);
@@ -152,12 +152,14 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
                         Log::error($e);
                         $response->end('Internal Server Error');
                     }
+
+                    Log::info('Spawned Worker completed: ' . \cli_get_process_title() . ' '. \getmypid());
                 },
                 wait: false,
                 finalize: $this->finalize($request)
             );
 
-            $this->registerFork($pid);
+            Log::info('Main Worker completed: ' . \cli_get_process_title() . ' '. \getmypid());
         };
     }
 

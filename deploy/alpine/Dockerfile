@@ -16,7 +16,7 @@ COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr
 RUN install-php-extensions @composer redis openssl mbstring pdo pdo_pgsql pdo_mysql zip exif gd > /dev/null
 
 # LaraLord dependencies
-RUN install-php-extensions inotify apcu sysvmsg pcntl openswoole openswoole-^25@stable  > /dev/null
+RUN install-php-extensions inotify apcu sysvmsg pcntl openswoole-^25@stable  > /dev/null
 
 # Install NPM
 RUN apk add --no-cache nodejs npm
@@ -60,7 +60,7 @@ FROM test AS compile
 ARG APP_VERSION
 ENV APP_VERSION=$APP_VERSION
 
-RUN composer install --optimize-autoloader --no-dev  \
+RUN composer update && composer install --optimize-autoloader --no-dev  \
 	&& composer bin box install
 
 RUN  PHP_MEMORY_LIMIT=1024M ./vendor/bin/box compile  --no-parallel

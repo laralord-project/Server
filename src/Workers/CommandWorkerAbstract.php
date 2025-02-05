@@ -126,7 +126,7 @@ abstract class CommandWorkerAbstract extends WorkerAbstract implements WorkerCon
                 continue;
             }
 
-            $this->childPid = $this->isolate($this->work($app), wait: false);
+            $this->childPid = $this->isolate($this->work($app), wait: false)->pid;
         } while ($this->shouldContinueLoop());
     }
 
