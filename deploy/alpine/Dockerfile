@@ -60,7 +60,7 @@ FROM test AS compile
 ARG APP_VERSION
 ENV APP_VERSION=$APP_VERSION
 
-RUN composer update && composer install --optimize-autoloader --no-dev  \
+RUN composer install --optimize-autoloader --no-dev  \
 	&& composer bin box install
 
 RUN  PHP_MEMORY_LIMIT=1024M ./vendor/bin/box compile  --no-parallel
