@@ -5,11 +5,12 @@ namespace Server\Workers;
 use OpenSwoole\{Http\Request, Http\Response, Http\Server, Process};
 use Server\Log;
 use Server\Traits\ProjectClassWrapper;
+use Server\Workers\Traits\ForksManager;
 use Swoole\Process\Pool;
 
 abstract class WorkerAbstract
 {
-    use ProjectClassWrapper;
+    use ProjectClassWrapper, ForksManager;
 
     /**
      * @var string|mixed
@@ -80,7 +81,7 @@ abstract class WorkerAbstract
 
             Log::debug('Application wormed up with code: ', [
                 'status' => $symfonyResponse->getStatusCode(),
-                'content' => $symfonyResponse->getContent(),
+                //                'content' => $symfonyResponse->getContent(),
             ]);
         } catch (\Throwable $e) {
             Log::error($e);
@@ -95,9 +96,52 @@ abstract class WorkerAbstract
     }
 
 
-    public function isolate(\Closure $action, int $exitSignal = \SIGKILL, bool $wait = true,
-        \Closure $finalize = null): int
-    {
+    public function isolate(
+        \Closure $action,
+        int $exitSignal = \SIGKILL,
+        bool $wait = true,
+        \Closure $finalize = null,
+        $registerForRemove = true,
+    ) {
+        $process = new \Swoole\Process(function (Process $worker) use ($action, $finalize) {
+            \method_exists($this, 'registerFork') && $this->registerFork($worker->pid);
+
+            try {
+                $action();
+            } catch (\Throwable $e) {
+                echo($e->getMessage());
+            } finally {
+                if ($finalize) {
+                    try {
+                        $finalize();
+                    } catch (\Throwable $e) {
+                        Log::error($e);
+                    }
+                }
+            }
+        }, true);
+
+        $process->start();
+
+        return $process;
+    }
+
+    /**
+     * @param \Closure      $action
+     * @param int           $exitSignal
+     * @param bool          $wait
+     * @param \Closure|null $finalize
+     * @return int
+     * @throws \Exception
+     * @deprecated
+     *
+     */
+    public function isolatepcntl(
+        \Closure $action,
+        int $exitSignal = \SIGKILL,
+        bool $wait = true,
+        \Closure $finalize = null
+    ): int {
         $childPid = \pcntl_fork();
 
         if ($childPid < 0) {
@@ -161,7 +205,7 @@ abstract class WorkerAbstract
 
     /**
      * @param            $symfonyResponse
-     * @param Response $response
+     * @param Response   $response
      *
      * @return void
      */
@@ -191,8 +235,30 @@ abstract class WorkerAbstract
             );
         }
 
-        // Set content
-        $response->end($symfonyResponse->getContent());
+        // Chunked content writing
+        if ($response->isWritable()) {
+            $content = $symfonyResponse->getContent();
+            $contentSize = strlen($content);
+            $chunkSize = 400_000; // Adjust chunk size as needed
+
+            for ($offset = 0; $offset < $contentSize; $offset += $chunkSize) {
+                $chunk = substr($content, $offset, $chunkSize);
+                if (!$response->write($chunk)) {
+                    Log::error('Failed to write response chunk');
+                    break; // Stop writing if there's an error
+                }
+            }
+//
+//            // Ensure response is closed after all chunks are sent
+            $response->end();
+            $response->close();
+            Log::debug('Response fully sent:', ['size' => $contentSize]);
+
+        } else {
+            Log::error('Response instance is not writable');
+            $response->end();
+            $response->close();
+        }
     }
 
 
@@ -211,7 +277,7 @@ abstract class WorkerAbstract
     /**
      * Preload the bootstrap code to memory to reduce the number of disk operations
      *
-     * @param string $basePath
+     * @param string   $basePath
      * @param          $force
      *
      * @return false|void

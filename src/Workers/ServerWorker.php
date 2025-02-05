@@ -78,7 +78,7 @@ class ServerWorker extends WorkerAbstract implements WorkerContract
                 // hide the uploaded files from openswoole garbage collector
                 $hiddenFiles = $this->hideUploadedFiles($request);
 
-                $pid = $this->isolate(
+                $this->isolate(
                     function () use ($request, $response, $hiddenFiles) {
                         if ($hiddenFiles) {
                             \usleep(100);
@@ -102,7 +102,7 @@ class ServerWorker extends WorkerAbstract implements WorkerContract
                     finalize: $this->finalize($request)
                 );
 
-                $this->registerFork($pid);
+
             } catch (\Throwable $e) {
                 Log::error($e);
             }

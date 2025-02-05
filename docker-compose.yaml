@@ -7,7 +7,7 @@ services:
         - APP_VERSION=${APP_VERSION:-0.1.0-local}
     environment:
       - APP_VERSION=0.1.0-local
-    working_dir: /laraorld
+    working_dir: /laralord
     volumes:
       - "./:/laralord"
     command: ['bash']
