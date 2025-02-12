@@ -143,6 +143,7 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
                         $symfonyResponse = $kernel->handle($symfonyRequest);
                         Log::debug('Response handle complete: ');
                         $symfonyResponse->header('Server', 'Laralord');
+                        $symfonyResponse->header('Tenant-Id', $envKey);
 
                         $this->respond($symfonyResponse, $response);
                         $kernel->terminate($symfonyRequest, $symfonyResponse);
