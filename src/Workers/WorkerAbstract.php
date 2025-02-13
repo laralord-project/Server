@@ -103,7 +103,7 @@ abstract class WorkerAbstract
         \Closure $finalize = null,
         $registerForRemove = true,
     ) {
-        $process = new \Swoole\Process(function (Process $worker) use ($action, $finalize) {
+        $process = new Process(function (Process $worker) use ($action, $finalize) {
             \method_exists($this, 'registerFork') && $this->registerFork($worker->pid);
 
             try {
@@ -119,7 +119,7 @@ abstract class WorkerAbstract
                     }
                 }
             }
-        }, true);
+        }, false);
 
         $process->start();
 
