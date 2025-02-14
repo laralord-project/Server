@@ -65,9 +65,9 @@ class RedisMutex
         }
 
         if ($this->redis->set($this->prefix.'test', 1, ['ex' => 10])) {
-            Log::debug('Redis Connection works');
+//            Log::debug('Redis Connection works');
         } else {
-            Log::error('test mutex lock failed');
+            Log::error('Mutex lock failed');
         }
 
         return true;
@@ -93,16 +93,8 @@ class RedisMutex
             $result = $this->redis->setnx($mutexKey, $value);
 
             if ($result) {
-                $this->redis->expire($mutexKey, 180, 'NX');
+                $this->redis->expire($mutexKey, $ttl, 'NX');
             }
-
-            Log::debug('Locking the key', [
-                'key'        => $mutexKey,
-                'expiration' => $expiration,
-                'raw_result' => $result,
-                'result'     => (bool) $result,
-                'timestamp'  => \microtime(true),
-            ]);
 
             return (bool) $result;
         } catch (\RedisException $e) {
@@ -133,16 +125,6 @@ class RedisMutex
             $this->mutexId = $mutexId;
             $this->lastRefreshTime = \microtime(true);
         }
-
-        Log::debug("Locking the key:", [
-            'method'     => 'incr',
-            'key'        => $mutexKey,
-            'mutex_id'   => $mutexId,
-            'result'     => (bool) $result,
-            'raw_result' => $result,
-            'value'      => $value,
-            'max'        => $max,
-        ]);
 
         return (bool) $result;
     }
@@ -191,15 +173,6 @@ class RedisMutex
 
         $result = $this->redis->expire($mutexKey, 2);
 
-        Log::debug("Refresh the key:", [
-            'method'     => 'refresh',
-            'key'        => $mutexKey,
-            'mutex_id'   => $this->mutexId,
-            'result'     => (bool) $result,
-            'raw_result' => $result,
-            'timestamp'  => \microtime(true),
-        ]);
-
         if (!$result) {
             $this->mutexId = null;
             $this->lastRefreshTime = 0;
@@ -217,15 +190,6 @@ class RedisMutex
     {
         $mutexKey = "{$this->prefix}:$key:{$this->mutexId}";
         $result = $this->redis->del($mutexKey);
-
-        Log::debug("Locking the key:", [
-            'method'     => 'decr',
-            'key'        => $mutexKey,
-            'mutex_id'   => $this->mutexId,
-            'result'     => (bool) $result,
-            'raw_result' => $result,
-            'timestamp'  => \microtime(true),
-        ]);
 
         $this->mutexId = null;
         $this->lastRefreshTime = 0;

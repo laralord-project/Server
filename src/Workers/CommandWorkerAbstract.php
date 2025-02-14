@@ -386,6 +386,12 @@ abstract class CommandWorkerAbstract extends WorkerAbstract implements WorkerCon
             return null;
         }
 
+        $env = Environment::find($appKey);
+
+        if (in_array($env['RESERVED'] ?? false, [true, 'true'])) {
+            return null;
+        }
+
         $this->tenantId = $appKey;
 
         return Environment::find($appKey);

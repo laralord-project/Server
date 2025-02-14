@@ -2,7 +2,7 @@
 
 namespace Server\Workers\Traits;
 
-use OpenSwoole\{ Table, Timer};
+use OpenSwoole\{Process, Table, Timer};
 use Server\Log;
 use Server\Workers\MultiTenantServerWorker;
 use Server\Workers\ServerWorker;
@@ -51,9 +51,8 @@ trait ForksManager
     /**
      * @return void
      */
-    private function initForksManager()
+    protected function initForksManager()
     {
-
         Log::debug("Max FORKS {$this->maxForks}", );
         $this->forkPids = new Table(1024);
         $this->forkPids->column('pid', Table::TYPE_INT, 32);
@@ -100,6 +99,7 @@ trait ForksManager
         foreach ($this->forkPids as $row) {
             $pid = $row['pid'];
 
+//            $result = pcntl_waitpid($pid, $status, WNOHANG);
             $result = pcntl_waitpid($pid, $status, WNOHANG);
 
             if ($result == -1) {
@@ -113,8 +113,7 @@ trait ForksManager
                 continue;
             };
 
-            $startedAt = $row['started_at'];
-
+//            $startedAt = $row['started_at'];
             // TODO implement correct exit the forks by timeout in case OOM
             // if(\microtime(true) > ($startedAt + $this->processTimout)) {
             //     Log::warning('Worker Fork timeout - send SIGKILL process terminating');

@@ -63,6 +63,7 @@ class Queue
     public function __construct(protected readonly ConfiguratorContract $configurator)
     {
         \cli_set_process_title("laralord:queue");
+//        Log::info('Config', [$this->configurator])
     }
 
 

@@ -169,7 +169,7 @@ class SchedulerWoker extends CommandWorkerAbstract implements WorkerContract
 
         $key = $tenantId . "_". (int)($this->nextCycleScheduledAt - 60);
 
-        if (self::$mutex->lock($key, value: $value)) {
+        if (self::$mutex->lock($key,ttl: 70, value: $value)) {
 
             return true;
         }
@@ -220,7 +220,7 @@ class SchedulerWoker extends CommandWorkerAbstract implements WorkerContract
     {
         $command = ['artisan', 'schedule:run'];
 
-        if (Log::$logger->isHandling(Level::Debug)) {
+        if (Log::$logger->isHandling(Level::Info)) {
             $command[] = '-vvv';
         }
 
