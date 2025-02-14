@@ -104,7 +104,7 @@ abstract class WorkerAbstract
         $registerForRemove = true,
     ) {
         $process = new Process(function (Process $worker) use ($action, $finalize) {
-            \method_exists($this, 'registerFork') && $this->registerFork($worker->pid);
+//            \method_exists($this, 'registerFork') && $this->registerFork($worker->pid);
 
             try {
                 $action();
@@ -379,14 +379,16 @@ abstract class WorkerAbstract
 
         $hidden = [];
 
-        \array_walk($request->tmpfiles, function (string $file) use (&$hidden) {
-            $newPath = "/tmp/laralord.upfile." . uniqid();
-            if (rename($file, $newPath)) {
-                $hidden[] = ['tmp_original' => $file, 'tmp_moved' => $newPath];
-            } else {
-                Log::error("Failed to move file: {$file}");
-            }
-        });
+        if ($request->tmpfiles) {
+            \array_walk($request->tmpfiles, function (string $file) use (&$hidden) {
+                $newPath = "/tmp/laralord.upfile." . uniqid();
+                if (rename($file, $newPath)) {
+                    $hidden[] = ['tmp_original' => $file, 'tmp_moved' => $newPath];
+                } else {
+                    Log::error("Failed to move file: {$file}");
+                }
+            });
+        }
 
         return $hidden;
     }
