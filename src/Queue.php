@@ -86,7 +86,7 @@ class Queue
         $this->envResolver->sync(function (array $changes) {
             Log::notice('Environment variables changed', $changes);
             // send the message to child processes to refresh the keys
-            $this->dispatchMessage(['action' => 'reload']);
+//            $this->dispatchMessage(['action' => 'reload']);
         });
 
         $this->registerSignalsHandler();

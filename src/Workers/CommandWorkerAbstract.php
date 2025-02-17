@@ -103,7 +103,7 @@ abstract class CommandWorkerAbstract extends WorkerAbstract implements WorkerCon
     public function mainLoop()
     {
         do {
-            \usleep(50000);
+            \usleep(50_000);
             $this->checkMessages();
 
             if ($this->isBusy()) {
@@ -126,7 +126,7 @@ abstract class CommandWorkerAbstract extends WorkerAbstract implements WorkerCon
                 continue;
             }
 
-            $this->childPid = $this->isolate($this->work($app), wait: false)->pid;
+            $this->childPid = $this->isolate($this->work($app), wait: true)->pid;
         } while ($this->shouldContinueLoop());
     }
 
@@ -139,6 +139,7 @@ abstract class CommandWorkerAbstract extends WorkerAbstract implements WorkerCon
      */
     protected function initWorker($server, $workerId): void
     {
+        $this->initForksManager();
         Log::$logger = Log::$logger->withName(Log::$logger->getName().":worker-$workerId");
         $this->name = "{$this->name}-$workerId";
         cli_set_process_title($this->name);
@@ -161,25 +162,11 @@ abstract class CommandWorkerAbstract extends WorkerAbstract implements WorkerCon
      */
     public function isBusy(): bool
     {
-        if (!$this->childPid) {
-            return false;
+        if ( !$this->waitForForkRelease()) {
+            return true;
         }
 
-        $result = pcntl_waitpid($this->childPid, $status, WNOHANG);
-
-        if ($result == -1) {
-            Log::error('Child process check is abnormal ');
-        } elseif ($result > 0) {
-            Log::debug('Child process exited');
-            $this->childPid = 0;
-            $this->releaseTenant($this->tenantId);
-            $this->tenantId = '';
-
-            return false;
-        }
-
-
-        return true;
+        return false;
     }
 
 
@@ -346,12 +333,13 @@ abstract class CommandWorkerAbstract extends WorkerAbstract implements WorkerCon
                 }
 
                 $kernel->terminate($input, $status);
-                Process::kill(\getmypid(), \SIGKILL);
+                exit(0);
+//                Process::kill(\getmypid(), \SIGKILL);
             } catch (\Throwable $e) {
                 Log::error($e);
             }
             finally {
-                Process::kill(\getmypid(), \SIGKILL);
+                exit(0);
             }
         };
     }

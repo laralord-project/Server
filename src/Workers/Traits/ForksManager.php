@@ -20,7 +20,7 @@ trait ForksManager
      *
      * @var Table
      */
-    private Table $forkPids;
+    private Table $forks;
 
     /**
      * The period of checking forked processes status
@@ -35,13 +35,6 @@ trait ForksManager
     public int $timerId;
 
     /**
-     * Process timeout microtime - float
-     *
-     * @var float|int
-     */
-    public float $processTimout = 5;
-
-    /**
      * @var int
      */
     private int $maxForks = 2;
@@ -53,11 +46,11 @@ trait ForksManager
      */
     protected function initForksManager()
     {
-        Log::debug("Max FORKS {$this->maxForks}", );
-        $this->forkPids = new Table(1024);
-        $this->forkPids->column('pid', Table::TYPE_INT, 32);
-        $this->forkPids->column('started_at', Table::TYPE_FLOAT);
-        $this->forkPids->create();
+        Log::debug("Max forks:  {$this->maxForks}", );
+        $this->forks = new Table(1024);
+        $this->forks->column('pid', Table::TYPE_INT, 32);
+        $this->forks->column('started_at', Table::TYPE_FLOAT);
+        $this->forks->create();
         $this->setForkCleanTimer();
     }
 
@@ -79,12 +72,12 @@ trait ForksManager
      */
     protected function setForkCleanTimer()
     {
-        if (isset($this->timer) && Timer::exists($this->timerId)) {
+        if (!empty($this->timerId) && Timer::exists($this->timerId)) {
             Timer::clear($this->timerId);
         }
 
-        Timer::tick($this->forkCheckPeriod, function () {
-            $this->cleanZombieProcesses();
+        $this->timerId = Timer::tick($this->forkCheckPeriod, function () {
+            $this->cleanStoppedProcesses();
         });
     }
 
@@ -92,24 +85,23 @@ trait ForksManager
     /**
      * @return array
      */
-    protected function cleanZombieProcesses(): array
+    protected function cleanStoppedProcesses(): array
     {
         $zombiePids = [];
 
-        foreach ($this->forkPids as $row) {
+        foreach ($this->forks as $row) {
             $pid = $row['pid'];
 
-//            $result = pcntl_waitpid($pid, $status, WNOHANG);
             $result = pcntl_waitpid($pid, $status, WNOHANG);
 
             if ($result == -1) {
-                Log::error("Fork process with PID $pid check is abnormal: $result");
-                $this->forkPids->del($pid);
+                Log::error("Fork process with PID $pid check is abnormal : $result");
+                $this->forks->del($pid);
                 continue;
             } elseif ($result > 0) {
                 $zombiePids[] = $pid;
-                $this->forkPids->del($pid);
-                Log::debug('Child process exited');
+                $this->forks->del($pid);
+                Log::debug('Child process exited. Forks still active: ', $this->getForks());
                 continue;
             };
 
@@ -129,15 +121,15 @@ trait ForksManager
     /**
      * @return array
      */
-    public function getForkPids(): array
+    public function getForks(): array
     {
-        if (!$this->forkPids->count()) {
+        if (!$this->forks->count()) {
             return [];
         }
 
         $pids = [];
 
-        foreach ($this->forkPids as $row) {
+        foreach ($this->forks as $row) {
             $pids[] = $row['pid'];
         }
 
@@ -152,12 +144,12 @@ trait ForksManager
      */
     public function registerFork(int $pid)
     {
-        $this->forkPids->set($pid, ['pid' => $pid, 'started_at' => \microtime(true)]);
+        $this->forks->set($pid, ['pid' => $pid, 'started_at' => \microtime(true)]);
     }
 
 
     public function forksLimitReached(bool $waitForRelease = true):bool {
-        return $this->forkPids->count() > $this->maxForks;
+        return $this->forks->count() > $this->maxForks;
     }
 
 
@@ -174,7 +166,7 @@ trait ForksManager
         while ($this->forksLimitReached() && $retry < $maxRetry) {
             Log::debug('Max worker fork reached. waiting for release. '.$retry);
             \usleep($maxWaitTime / 10);
-            $this->cleanZombieProcesses();
+            $this->cleanStoppedProcesses();
             $retry++;
         }
 

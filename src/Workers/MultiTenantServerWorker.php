@@ -77,10 +77,10 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
         return function (Request $request, Response $response) {
             Log::info(
                 "{$request->server['request_method']} {$request->server['request_uri']}",
-                ['forks_count' => $this->forkPids->count()]
+                ['forks_count' => $this->forks->count()]
             );
 
-            $this->cleanZombieProcesses();
+            $this->cleanStoppedProcesses();
 
             if (!$this->waitForForkRelease()) {
                 Log::warning('Max worker forks reached');

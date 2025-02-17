@@ -53,7 +53,7 @@ class QueueWorker extends CommandWorkerAbstract implements WorkerContract
     {
         $isBusy = parent::isBusy();
 
-        if ($isBusy) {
+        if ($isBusy && !empty($this->tenantId)) {
             self::$mutex->refresh($this->tenantId);
         }
 
@@ -111,7 +111,7 @@ class QueueWorker extends CommandWorkerAbstract implements WorkerContract
             "--queue={$this->queue}",
         ];
 
-        if (!Log::$logger->isHandling(Level::Debug)) {
+        if (!Log::$logger->isHandling(Level::Info)) {
             $command[] = '-q';
         } else {
             $command[] = '-vvv';

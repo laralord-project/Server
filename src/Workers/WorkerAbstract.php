@@ -55,6 +55,7 @@ abstract class WorkerAbstract
 
         cli_set_process_title("{$this->name}-$workerId");
         Log::$logger = Log::$logger->withName("{$this->name}-$workerId");
+
         require_once "{$this->basePath}/vendor/autoload.php";
     }
 
@@ -103,8 +104,13 @@ abstract class WorkerAbstract
         \Closure $finalize = null,
         $registerForRemove = true,
     ) {
+
+        if ($this->forksLimitReached()) {
+            $this->waitForForkRelease();
+        }
+
         $process = new Process(function (Process $worker) use ($action, $finalize) {
-//            \method_exists($this, 'registerFork') && $this->registerFork($worker->pid);
+            $this->registerFork($worker->pid);
 
             try {
                 $action();
@@ -119,9 +125,15 @@ abstract class WorkerAbstract
                     }
                 }
             }
+
+
         }, false);
 
         $process->start();
+
+        if ($wait) {
+            $process->wait();
+        }
 
         return $process;
     }
