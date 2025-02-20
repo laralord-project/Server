@@ -20,6 +20,8 @@ abstract class CommandWorkerAbstract extends WorkerAbstract implements WorkerCon
     protected Process $process;
 
     /**
+     * Define how many workers could process the command for tenant at the same time
+     *
      * @var int
      */
     protected int $maxWorkerPerTenant = 1;

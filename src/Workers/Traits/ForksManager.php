@@ -95,7 +95,13 @@ trait ForksManager
             $result = pcntl_waitpid($pid, $status, WNOHANG);
 
             if ($result == -1) {
-                Log::error("Fork process with PID $pid check is abnormal : $result");
+                $errorCode = pcntl_get_last_error();
+                // child process exited
+                if ($errorCode !== 10) {
+                    $message = \pcntl_strerror($errorCode);
+                    Log::error("Fork process with PID $pid check is abnormal : $result,  error code: $errorCode, message : $message");
+                }
+
                 $this->forks->del($pid);
                 continue;
             } elseif ($result > 0) {
@@ -105,7 +111,11 @@ trait ForksManager
                 continue;
             };
 
-//            $startedAt = $row['started_at'];
+            Log::debug('Child process are still in process');
+
+
+
+            //            $startedAt = $row['started_at'];
             // TODO implement correct exit the forks by timeout in case OOM
             // if(\microtime(true) > ($startedAt + $this->processTimout)) {
             //     Log::warning('Worker Fork timeout - send SIGKILL process terminating');
@@ -117,6 +127,67 @@ trait ForksManager
         return $zombiePids;
     }
 
+
+    public function isolate(
+        \Closure $action,
+        bool $wait = true,
+        \Closure $finalize = null,
+    ) {
+
+        if ($this->forksLimitReached()) {
+            $this->waitForForkRelease();
+        }
+
+        $process = new Process(function (Process $worker) use ($action, $finalize) {
+            $this->registerFork($worker);
+
+            try {
+                $action();
+            } catch (\Throwable $e) {
+                Log::error($e);
+            } finally {
+                if ($finalize) {
+                    try {
+                        $finalize();
+                    } catch (\Throwable $e) {
+                        Log::error($e);
+                    }
+                }
+            }
+        }, false);
+
+        $process->start();
+
+        if ($wait) {
+            $process->wait();
+        }
+
+        return $process;
+    }
+
+
+    /**
+     * @param Process $process
+     *
+     * @return \Closure
+     */
+    public function getShutdownHandler(Process $process): \Closure
+    {
+        return function() use ($process) {
+            $error = error_get_last();
+
+            if ($error) {
+                if (\method_exists($this, 'errorHandler')) {
+                    $this->errorHandler($error);
+                }
+
+                Log::error('worker error', $error);
+            }
+
+            Log::info('Shotdown handled for pid:' . $process->pid);
+            $this->releaseFork($process->pid);
+        };
+    }
 
     /**
      * @return array
@@ -142,13 +213,37 @@ trait ForksManager
      *
      * @return void
      */
-    public function registerFork(int $pid)
+    public function registerFork(Process $process)
     {
+        $pid = $process->pid;
         $this->forks->set($pid, ['pid' => $pid, 'started_at' => \microtime(true)]);
+
+        \register_shutdown_function(fn() => $this->getShutdownHandler($process));
+        set_error_handler(fn() => $this->getShutdownHandler($process));
     }
 
 
-    public function forksLimitReached(bool $waitForRelease = true):bool {
+    /**
+     * @param int $pid
+     *
+     * @return void
+     */
+    public function releaseFork(int $pid) {
+        $this->forks->del($pid);
+    }
+
+
+    /**
+     * @param bool $waitForRelease
+     *
+     * @return bool
+     */
+    public function forksLimitReached(bool $waitForRelease = false):bool {
+
+        if ($waitForRelease) {
+            return $this->waitForForkRelease();
+        }
+
         return $this->forks->count() > $this->maxForks;
     }
 
@@ -164,8 +259,7 @@ trait ForksManager
         $retry = 0;
 
         while ($this->forksLimitReached() && $retry < $maxRetry) {
-            Log::debug('Max worker fork reached. waiting for release. '.$retry);
-            \usleep($maxWaitTime / 10);
+            \usleep($maxWaitTime / $maxRetry);
             $this->cleanStoppedProcesses();
             $retry++;
         }
