@@ -113,8 +113,6 @@ trait ForksManager
 
             Log::debug('Child process are still in process');
 
-
-
             //            $startedAt = $row['started_at'];
             // TODO implement correct exit the forks by timeout in case OOM
             // if(\microtime(true) > ($startedAt + $this->processTimout)) {
@@ -128,11 +126,20 @@ trait ForksManager
     }
 
 
+    /**
+     * Execute the code from closure on new process
+     *
+     * @param \Closure $action
+     * @param bool $wait
+     * @param \Closure|null $finalize
+     *
+     * @return Process
+     */
     public function isolate(
         \Closure $action,
         bool $wait = true,
         \Closure $finalize = null,
-    ) {
+    ): Process {
 
         if ($this->forksLimitReached()) {
             $this->waitForForkRelease();
