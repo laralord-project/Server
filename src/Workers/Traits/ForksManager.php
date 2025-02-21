@@ -20,7 +20,7 @@ trait ForksManager
      *
      * @var Table
      */
-    private Table $forkPids;
+    private Table $forks;
 
     /**
      * The period of checking forked processes status
@@ -35,13 +35,6 @@ trait ForksManager
     public int $timerId;
 
     /**
-     * Process timeout microtime - float
-     *
-     * @var float|int
-     */
-    public float $processTimout = 5;
-
-    /**
      * @var int
      */
     private int $maxForks = 2;
@@ -53,11 +46,11 @@ trait ForksManager
      */
     protected function initForksManager()
     {
-        Log::debug("Max FORKS {$this->maxForks}", );
-        $this->forkPids = new Table(1024);
-        $this->forkPids->column('pid', Table::TYPE_INT, 32);
-        $this->forkPids->column('started_at', Table::TYPE_FLOAT);
-        $this->forkPids->create();
+        Log::debug("Max forks:  {$this->maxForks}", );
+        $this->forks = new Table(1024);
+        $this->forks->column('pid', Table::TYPE_INT, 32);
+        $this->forks->column('started_at', Table::TYPE_FLOAT);
+        $this->forks->create();
         $this->setForkCleanTimer();
     }
 
@@ -79,12 +72,12 @@ trait ForksManager
      */
     protected function setForkCleanTimer()
     {
-        if (isset($this->timer) && Timer::exists($this->timerId)) {
+        if (!empty($this->timerId) && Timer::exists($this->timerId)) {
             Timer::clear($this->timerId);
         }
 
-        Timer::tick($this->forkCheckPeriod, function () {
-            $this->cleanZombieProcesses();
+        $this->timerId = Timer::tick($this->forkCheckPeriod, function () {
+            $this->cleanStoppedProcesses();
         });
     }
 
@@ -92,28 +85,35 @@ trait ForksManager
     /**
      * @return array
      */
-    protected function cleanZombieProcesses(): array
+    protected function cleanStoppedProcesses(): array
     {
         $zombiePids = [];
 
-        foreach ($this->forkPids as $row) {
+        foreach ($this->forks as $row) {
             $pid = $row['pid'];
 
-//            $result = pcntl_waitpid($pid, $status, WNOHANG);
             $result = pcntl_waitpid($pid, $status, WNOHANG);
 
             if ($result == -1) {
-                Log::error("Fork process with PID $pid check is abnormal: $result");
-                $this->forkPids->del($pid);
+                $errorCode = pcntl_get_last_error();
+                // child process exited
+                if ($errorCode !== 10) {
+                    $message = \pcntl_strerror($errorCode);
+                    Log::error("Fork process with PID $pid check is abnormal : $result,  error code: $errorCode, message : $message");
+                }
+
+                $this->forks->del($pid);
                 continue;
             } elseif ($result > 0) {
                 $zombiePids[] = $pid;
-                $this->forkPids->del($pid);
-                Log::debug('Child process exited');
+                $this->forks->del($pid);
+                Log::debug('Child process exited. Forks still active: ', $this->getForks());
                 continue;
             };
 
-//            $startedAt = $row['started_at'];
+            Log::debug('Child process are still in process');
+
+            //            $startedAt = $row['started_at'];
             // TODO implement correct exit the forks by timeout in case OOM
             // if(\microtime(true) > ($startedAt + $this->processTimout)) {
             //     Log::warning('Worker Fork timeout - send SIGKILL process terminating');
@@ -127,17 +127,87 @@ trait ForksManager
 
 
     /**
+     * Execute the code from closure on new process
+     *
+     * @param \Closure $action
+     * @param bool $wait
+     * @param \Closure|null $finalize
+     *
+     * @return Process
+     */
+    public function isolate(
+        \Closure $action,
+        bool $wait = true,
+        \Closure $finalize = null,
+    ): Process {
+
+        if ($this->forksLimitReached()) {
+            $this->waitForForkRelease();
+        }
+
+        $process = new Process(function (Process $worker) use ($action, $finalize) {
+            $this->registerFork($worker);
+
+            try {
+                $action();
+            } catch (\Throwable $e) {
+                Log::error($e);
+            } finally {
+                if ($finalize) {
+                    try {
+                        $finalize();
+                    } catch (\Throwable $e) {
+                        Log::error($e);
+                    }
+                }
+            }
+        }, false);
+
+        $process->start();
+
+        if ($wait) {
+            $process->wait();
+        }
+
+        return $process;
+    }
+
+
+    /**
+     * @param Process $process
+     *
+     * @return \Closure
+     */
+    public function getShutdownHandler(Process $process): \Closure
+    {
+        return function() use ($process) {
+            $error = error_get_last();
+
+            if ($error) {
+                if (\method_exists($this, 'errorHandler')) {
+                    $this->errorHandler($error);
+                }
+
+                Log::error('worker error', $error);
+            }
+
+            Log::info('Shotdown handled for pid:' . $process->pid);
+            $this->releaseFork($process->pid);
+        };
+    }
+
+    /**
      * @return array
      */
-    public function getForkPids(): array
+    public function getForks(): array
     {
-        if (!$this->forkPids->count()) {
+        if (!$this->forks->count()) {
             return [];
         }
 
         $pids = [];
 
-        foreach ($this->forkPids as $row) {
+        foreach ($this->forks as $row) {
             $pids[] = $row['pid'];
         }
 
@@ -150,14 +220,38 @@ trait ForksManager
      *
      * @return void
      */
-    public function registerFork(int $pid)
+    public function registerFork(Process $process)
     {
-        $this->forkPids->set($pid, ['pid' => $pid, 'started_at' => \microtime(true)]);
+        $pid = $process->pid;
+        $this->forks->set($pid, ['pid' => $pid, 'started_at' => \microtime(true)]);
+
+        \register_shutdown_function(fn() => $this->getShutdownHandler($process));
+        set_error_handler(fn() => $this->getShutdownHandler($process));
     }
 
 
-    public function forksLimitReached(bool $waitForRelease = true):bool {
-        return $this->forkPids->count() > $this->maxForks;
+    /**
+     * @param int $pid
+     *
+     * @return void
+     */
+    public function releaseFork(int $pid) {
+        $this->forks->del($pid);
+    }
+
+
+    /**
+     * @param bool $waitForRelease
+     *
+     * @return bool
+     */
+    public function forksLimitReached(bool $waitForRelease = false):bool {
+
+        if ($waitForRelease) {
+            return $this->waitForForkRelease();
+        }
+
+        return $this->forks->count() > $this->maxForks;
     }
 
 
@@ -172,9 +266,8 @@ trait ForksManager
         $retry = 0;
 
         while ($this->forksLimitReached() && $retry < $maxRetry) {
-            Log::debug('Max worker fork reached. waiting for release. '.$retry);
-            \usleep($maxWaitTime / 10);
-            $this->cleanZombieProcesses();
+            \usleep($maxWaitTime / $maxRetry);
+            $this->cleanStoppedProcesses();
             $retry++;
         }
 

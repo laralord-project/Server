@@ -77,10 +77,10 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
         return function (Request $request, Response $response) {
             Log::info(
                 "{$request->server['request_method']} {$request->server['request_uri']}",
-                ['forks_count' => $this->forkPids->count()]
+                ['forks_count' => $this->forks->count()]
             );
 
-            $this->cleanZombieProcesses();
+            $this->cleanStoppedProcesses();
 
             if (!$this->waitForForkRelease()) {
                 Log::warning('Max worker forks reached');
@@ -149,6 +149,7 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
                         $kernel->terminate($symfonyRequest, $symfonyResponse);
                         Log::debug('Memory usage: ' . \memory_get_usage());
                         Log::debug('Memory usage real: ' . \memory_get_usage(true));
+
                     } catch (\Throwable $e) {
                         Log::error($e);
                         $response->end('Internal Server Error');
@@ -164,6 +165,14 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
         };
     }
 
+
+    /**
+     * @return void
+     */
+    public function errorHandler(): void
+    {
+        $this->response?->close();
+    }
 
     /**
      * @return mixed|string|null

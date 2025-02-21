@@ -125,7 +125,7 @@ class SchedulerWoker extends CommandWorkerAbstract implements WorkerContract
         }
 
         if ($this->loopCompleted) {
-            Log::debug('Schdeule Cycle started,');
+            Log::debug('Schedule Cycle started.');
             $this->loopCompleted = false;
             $this->startedAt = $this->now();
             $this->completedAt = null;

@@ -55,6 +55,7 @@ abstract class WorkerAbstract
 
         cli_set_process_title("{$this->name}-$workerId");
         Log::$logger = Log::$logger->withName("{$this->name}-$workerId");
+
         require_once "{$this->basePath}/vendor/autoload.php";
     }
 
@@ -93,90 +94,6 @@ abstract class WorkerAbstract
     {
         unset($server);
         unset($GLOBALS['cli']);
-    }
-
-
-    public function isolate(
-        \Closure $action,
-        int $exitSignal = \SIGKILL,
-        bool $wait = true,
-        \Closure $finalize = null,
-        $registerForRemove = true,
-    ) {
-        $process = new Process(function (Process $worker) use ($action, $finalize) {
-//            \method_exists($this, 'registerFork') && $this->registerFork($worker->pid);
-
-            try {
-                $action();
-            } catch (\Throwable $e) {
-                echo($e->getMessage());
-            } finally {
-                if ($finalize) {
-                    try {
-                        $finalize();
-                    } catch (\Throwable $e) {
-                        Log::error($e);
-                    }
-                }
-            }
-        }, false);
-
-        $process->start();
-
-        return $process;
-    }
-
-    /**
-     * @param \Closure      $action
-     * @param int           $exitSignal
-     * @param bool          $wait
-     * @param \Closure|null $finalize
-     * @return int
-     * @throws \Exception
-     * @deprecated
-     *
-     */
-    public function isolatepcntl(
-        \Closure $action,
-        int $exitSignal = \SIGKILL,
-        bool $wait = true,
-        \Closure $finalize = null
-    ): int {
-        $childPid = \pcntl_fork();
-
-        if ($childPid < 0) {
-            throw new \Exception("Failed to create a fork of the process to isolate action");
-        }
-
-        // executing closure method on new created work
-        if ($childPid === 0) {
-            cli_set_process_title(\cli_get_process_title() . ':fork');
-            try {
-                $action();
-            } catch (\Throwable $e) {
-                Log::error($e);
-            } finally {
-                if ($finalize) {
-                    try {
-                        $finalize();
-                    } catch (\Throwable $e) {
-                        Log::error($e);
-                    }
-                }
-
-                Process::kill(\getmypid(), $exitSignal);
-
-                throw new \Exception("The child process" . \getmypid() . " didn't exit");
-            }
-        }
-
-        if (!$wait) {
-            return $childPid;
-        }
-
-        \pcntl_wait($status);
-
-        return $status;
     }
 
 
