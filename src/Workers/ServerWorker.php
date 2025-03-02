@@ -81,6 +81,7 @@ class ServerWorker extends WorkerAbstract implements WorkerContract
                 $this->isolate(
                     function () use ($request, $response, $hiddenFiles) {
                         if ($hiddenFiles) {
+                            // delay on 0.001s for terminating parent process and restore the hidden files
                             \usleep(100);
                             $this->restoreHiddenFiles($hiddenFiles);
                         }
