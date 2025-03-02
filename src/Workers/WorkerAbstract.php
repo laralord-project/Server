@@ -75,15 +75,18 @@ abstract class WorkerAbstract
             $server = [
                 'REQUEST_URI' => self::$healthCheckEndpoint,
             ];
+            $request = new $symfonyRequestClass([], [], [], [], [], $server, '');
 
-            $symfonyResponse = $kernel->handle(
-                new $symfonyRequestClass([], [], [], [], [], $server, '')
-            );
+            $symfonyResponse = $kernel->handle($request);
 
             Log::debug('Application wormed up with code: ', [
                 'status' => $symfonyResponse->getStatusCode(),
-                //                'content' => $symfonyResponse->getContent(),
             ]);
+
+            $this->app->forgetInstance('redis');
+            $this->app->forgetInstance('cache');
+            $this->app->forgetInstance('db');
+
         } catch (\Throwable $e) {
             Log::error($e);
         }
@@ -186,8 +189,9 @@ abstract class WorkerAbstract
         //     return $this->app = eval(self::$bootstrapCode);
         // }
 
-        Log::debug('required app.php');
         $this->app = require "{$this->basePath}/bootstrap/app.php";
+
+        return $this->app;
     }
 
 

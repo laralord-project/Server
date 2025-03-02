@@ -210,11 +210,11 @@ class S3ProxyServer extends HttpServer
     private function registerHandlers()
     {
         $this->on("start", function (self $server) {
-            \cli_set_process_title("laralord:server");
+            \cli_set_process_title("laralord:s3-proxy");
             $scheme = 'http';
 
-            Log::warning("Laralord Server started on {$scheme}://{$server->host}:{$server->port}\n");
-            Log::notice('Server started');
+            Log::warning("Laralord S3 Proxy Server started on {$scheme}://{$server->host}:{$server->port}\n");
+            Log::notice('S3 Proxy Server started');
 
             $this->watch && $this->addWatcherTimer();
         });
