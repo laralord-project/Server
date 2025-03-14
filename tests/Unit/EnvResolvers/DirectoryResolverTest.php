@@ -77,11 +77,11 @@ class DirectoryResolverTest extends TestCase
 
         $this->assertEquals(
             ['APP_NAME' => 'app 1', 'TENANT_ID' => 'tenant1'],
-            $this->resolver->getEnvironmentVariables('tenant1')
+            $this->resolver->resolve('tenant1')->toArray()
         );
         $this->assertEquals(
             ['APP_NAME' => 'app 2', 'TENANT_ID' => 'tenant2'],
-            $this->resolver->getEnvironmentVariables('tenant2')
+            $this->resolver->resolve('tenant2')->toArray()
         );
     }
 
