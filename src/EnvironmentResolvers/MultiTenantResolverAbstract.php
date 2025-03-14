@@ -6,7 +6,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use Server\Application\Environment;
 use Server\Log;
 
-abstract class MultiTenantResolverAbstract
+abstract class MultiTenantResolverAbstract implements EnvResolverContract
 {
     abstract public function sync(\Closure $action = null): void;
 
@@ -26,6 +26,8 @@ abstract class MultiTenantResolverAbstract
      */
     public function boot(): bool
     {
+        Environment::setResolver($this);
+
         $keys = $this->listSecrets();
         $this->refreshEnvironments($keys);
 
@@ -95,20 +97,24 @@ abstract class MultiTenantResolverAbstract
 
 
     /**
-     * @param $appId
+     * @param string $appId
+     * @param bool $asArray
      *
-     * @return array
+     * @return array|Environment|null
      * @throws \Exception
      */
-    public function getEnvironmentVariables($appId = ''): array
+    public function resolve(string $appId = ''):? Environment
     {
         if (!$appId) {
             throw new \Exception('The application\'s ID is not specified.');
         }
 
-        return Environment::find($appId)?->toArray() ?? [];
+        return Environment::find($appId);
     }
 
+    /**
+     * @return array
+     */
     public function getApplications(): array
     {
         return Environment::getKeys();

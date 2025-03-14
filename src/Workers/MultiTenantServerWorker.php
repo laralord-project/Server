@@ -122,7 +122,7 @@ class MultiTenantServerWorker extends WorkerAbstract implements WorkerContract
                             return;
                         }
 
-                        $env = Environment::find($envKey);
+                        $env = Environment::resolve($envKey);
 
                         if (!$env) {
                             Log::warning('Tenant not found');

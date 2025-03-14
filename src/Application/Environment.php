@@ -2,8 +2,10 @@
 
 namespace Server\Application;
 
+use DateTime;
 use OpenSwoole\Table;
 use phpDocumentor\Reflection\Types\This;
+use Server\EnvironmentResolvers\EnvResolverContract;
 use Server\Log;
 
 /**
@@ -45,17 +47,24 @@ class Environment implements \ArrayAccess
      */
     public string $key;
 
+    protected static EnvResolverContract $resolver;
 
     /**
      * @param  array  $vars
      * @param  int    $version
      * @param  int|string    $created_at  The timestamp where the variables was created
      */
-    public function __construct(private array $vars, private int $version, public int|string $created_at)
+    public function __construct(
+        private array $vars,
+        private int $version,
+        public int|string $created_at,
+        public ?int $updated_at = null)
     {
         if (\is_string($this->created_at)) {
             $this->created_at = \strtotime($this->created_at);
         }
+
+        $this->updated_at = $this->updated_at ?: $this->now();
     }
 
 
@@ -103,6 +112,7 @@ class Environment implements \ArrayAccess
     {
         $this->vars = $vars;
         $createdAt = \strtotime($createdAt);
+        $this->updated_at = $this->now();
 
         if ($this->created_at !== $createdAt || $version !== $this->version) {
             $this->created_at = $createdAt;
@@ -209,11 +219,17 @@ class Environment implements \ArrayAccess
      */
     public static function initTable(): Table
     {
+        if (!empty(self::$storage)) {
+            return self::$storage;
+        }
+
         $storage = self::$storage = new Table(1024);
         $storage->column('id', Table::TYPE_INT, 32);
         $storage->column('version', Table::TYPE_INT, 32);
-        $storage->column('created_at', Table::TYPE_INT, 32);
         $storage->column('variables', Table::TYPE_STRING, 10000);
+        $storage->column('created_at', Table::TYPE_INT, 32);
+        $storage->column('updated_at', Table::TYPE_INT, 32);
+
         $storage->create();
 
 
@@ -229,12 +245,15 @@ class Environment implements \ArrayAccess
         if (!isset(self::$storage)) {
             self::initTable();
         }
+
         $data = [
             'id' => $this->id,
             'version' => $this->version,
-            'created_at' => $this->created_at,
             'variables' => \json_encode($this->vars),
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
         ];
+
         self::$storage->set($this->key, $data);
 
         return $this;
@@ -314,11 +333,28 @@ class Environment implements \ArrayAccess
 
         $row = self::$storage->get($key);
 
-        $env = new self(\json_decode($row['variables'], true), $row['version'], $row['created_at']);
+        $env = new self(\json_decode($row['variables'], true), $row['version'], $row['created_at'], $row['updated_at']);
         $env->key = $key;
         $env->id = $row['id'];
 
         return $env;
+    }
+
+
+    public static function resolve($key)
+    {
+        // resolve by internal table if no resolver set
+        if (empty(self::$resolver)) {
+            return self::find($key);
+        }
+
+        return self::$resolver->resolve($key);
+    }
+
+
+    public static function setResolver(EnvResolverContract $resolver): void
+    {
+        self::$resolver = $resolver;
     }
 
 
@@ -358,5 +394,20 @@ class Environment implements \ArrayAccess
         $this->id = $id;
 
         return $this;
+    }
+
+    /**
+     * Return now timestamp - integer
+     *
+     * @return int
+     */
+    public function now(): int {
+        return (new DateTime())->getTimestamp();
+    }
+
+    public function isExpired(int $ttl): bool {
+        Log::info('is expired ',  ['updated ' => $this->updated_at, 'ttl' => $ttl, 'now' => $this->now()]);
+
+        return ($this->updated_at + $ttl) <  $this->now();
     }
 }

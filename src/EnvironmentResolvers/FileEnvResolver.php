@@ -60,9 +60,9 @@ class FileEnvResolver implements EnvResolverContract
     }
 
 
-    public function getEnvironmentVariables(): array
+    public function resolve(string $appId = ''):? Environment
     {
-        return $this->env->toArray();
+        return $this->env;
     }
 
 

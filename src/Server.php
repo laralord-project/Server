@@ -77,8 +77,13 @@ class Server
                 'APP_BASE_PATH'          => $this->basePath,
                 'APP_RUNNING_IN_CONSOLE' => false,
             ])
-            ->exclude($this->configurator->listServerVariables())
-            ->boot();
+            ->exclude($this->configurator->listServerVariables());
+
+        if (\method_exists($this->envResolver, 'setAsyncResolver')) {
+            $this->envResolver->setAsyncResolver(true);
+        }
+
+        $this->envResolver->boot();
 
         $this->server->set($this->options);
         $this->worker = $this->getWorker();
