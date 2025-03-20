@@ -7,7 +7,7 @@
 
 
 
-# <img src="assets/logo.png" width="34" alt="LaraLord Server" >  &nbsp; LaraLord Project - Server
+# <img src="assets/logo.png" width="34" alt="Laralord Server" >  &nbsp; Laralord Project - Server
 
 Laralord enables multi-tenancy for any stateless Laravel application without requiring code modifications.
 It is an OpenSwoole wrapper designed to provide a high-performance, multi-tenant server setup for Laravel applications.
