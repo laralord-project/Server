@@ -46,6 +46,10 @@ class Watcher
         $this->inotify = \inotify_init();
         stream_set_blocking($this->inotify, 0);
         $this->wdConstants = require __DIR__.'/watcher_actions.php';
+
+        if (\function_exists('opcache_reset') && ini_get('opcache.enable_cli')) {
+            $this->addCallback($this->opcacheResetCallback());
+        }
     }
 
 
@@ -152,6 +156,61 @@ class Watcher
             }, $changes);
 
             \array_walk($this->callbacks, fn(Closure $callback) => $callback($changes));
+        }
+    }
+
+    /**
+     * @return Closure
+     */
+    public function opcacheResetCallback(): Closure
+    {
+        return function (array $changes) {
+            if (!function_exists('opcache_invalidate')) {
+                Log::debug('OPCache invalidate not available—skipping');
+                return;
+            }
+
+            foreach ($changes as $change) {
+                $dirPath = $change['path']; // e.g., /path/to/app/Http/Controllers
+                $fileName = $change['name'] ?? ''; // e.g., TenantController.php or empty for dir events
+                $fullPath = rtrim($dirPath, '/') . ($fileName ? '/' . $fileName : '');
+
+                if (!file_exists($fullPath)) {
+                    Log::debug("Path not found: {$fullPath}—skipping");
+                    continue;
+                }
+
+                if (is_dir($fullPath)) {
+                    // Recursively invalidate PHP files in directory
+                    $this->invalidateDirectory($fullPath);
+                } elseif (is_file($fullPath) && pathinfo($fullPath, PATHINFO_EXTENSION) === 'php') {
+                    // Invalidate single PHP file
+                    $result = opcache_invalidate($fullPath, true); // true forces recompile
+                    Log::debug("Invalidated $fullPath: " . ($result ? 'Success' : 'Failed'));
+                }
+            }
+        };
+    }
+
+    /**
+     * Recursively invalidate OPCache for PHP files in a directory
+     * @param string $dirPath
+     * @return void
+     */
+    protected function invalidateDirectory(string $dirPath): void
+    {
+        $files = scandir($dirPath);
+        foreach ($files as $file) {
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
+            $fullPath = "$dirPath/$file";
+            if (is_dir($fullPath)) {
+                $this->invalidateDirectory($fullPath); // Recursive
+            } elseif (is_file($fullPath) && pathinfo($fullPath, PATHINFO_EXTENSION) === 'php') {
+                $result = opcache_invalidate($fullPath, true);
+                Log::debug("Invalidated $fullPath: " . ($result ? 'Success' : 'Failed'));
+            }
         }
     }
 }

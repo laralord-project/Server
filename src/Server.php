@@ -159,6 +159,7 @@ class Server
         $this->watcher->watch($this->watchTargets, basePath: $this->basePath);
         // TODO fix the reload of workers / currently the reload doesn't update the workers context
         $this->watcher->addCallback(fn(array $changes) => $this->server->reload());
+
         Log::debug('Init watcher. Watching: ', $this->watchTargets ?: []);
     }
 
@@ -252,6 +253,10 @@ class Server
 
         $this->server->on('BeforeReload', function ($server) {
             // $this->server->sendMessage('terminate', 0);
+        });
+
+        $this->server->on('AfterReload', function ($server) {
+            Log::debug('Server Reloaded');
         });
         // Pipe message event
         $this->server->on("pipeMessage", function ($server, $src_worker_id, $message) {
