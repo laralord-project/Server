@@ -2,7 +2,7 @@
 
 namespace Server;
 
-use Aws\Handler\GuzzleV6\GuzzleHandler;
+use Aws\Handler\Guzzle\GuzzleHandler;
 use Aws\S3\S3Client;
 use GuzzleHttp\{Client, Handler\CurlHandler, HandlerStack};
 use OpenSwoole\{HTTP\Server as HttpServer, Table};
