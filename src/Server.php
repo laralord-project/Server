@@ -79,7 +79,7 @@ class Server
             ])
             ->exclude($this->configurator->listServerVariables());
 
-        if (\method_exists($this->envResolver, 'setAsyncResolver')) {
+        if (\method_exists($this->envResolver, 'setAsyncResolver') && $this->envResolverMode === 'async') {
             $this->envResolver->setAsyncResolver(true);
         }
 
@@ -141,8 +141,6 @@ class Server
             return (new ServerWorker($this->envResolver->getEnvironment(), $this->warmUp))
                 ->setMaxForks($this->maxForks);
         }
-
-        Log::info('Server Options: ', [$this->options]);
 
         return (new MultiTenantServerWorker($this->basePath, $this->tenantKey, $this->fallbackTenantId))
             ->setMaxForks($this->maxForks);
