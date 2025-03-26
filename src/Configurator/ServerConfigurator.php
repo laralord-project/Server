@@ -49,6 +49,8 @@ class ServerConfigurator implements ConfiguratorContract
 
     public int $maxForks = 5;
 
+    public string $envResolverMode = 'async';
+
     /**
      * @var array|int[]
      */
@@ -132,6 +134,7 @@ class ServerConfigurator implements ConfiguratorContract
             'header.TENANT-ID', 'tenantKey',
             'Has format \'method.key\' Tenant resolve method: header, jwt, oidc, cookie.',
         ],
+        'SERVER_ENV_RESOLVER_MODE' => ['timer', 'envResolverMode', 'The Environment variables resolver mode: timer, async'],
         'SERVER_FALLBACK_TENANT_ID' => [
             '', 'fallbackTenantId',
             'Fallback tenant key which will be used in case no tenant resolved. Multi-tenant mode',
