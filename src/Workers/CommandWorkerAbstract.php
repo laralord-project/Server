@@ -357,8 +357,7 @@ abstract class CommandWorkerAbstract extends WorkerAbstract implements WorkerCon
         $appKeys = $this->getApplicationKeys();
 
         if (!count($this->appKeys)) {
-            Log::error("No applications loaded for processing");
-
+            // exit if no applications loaded
             return null;
         }
 

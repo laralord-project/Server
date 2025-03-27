@@ -218,10 +218,10 @@ class VaultEnvResolver extends MultiTenantResolverAbstract implements EnvResolve
                 return true;
             }
 
+            Environment::initTable();
+
             if (!$this->asyncResolver) {
                 parent::boot();
-            } else {
-                Environment::initTable();
             }
 
         } catch (ClientException $e) {
@@ -325,7 +325,13 @@ class VaultEnvResolver extends MultiTenantResolverAbstract implements EnvResolve
     public function listSecrets(): array
     {
         $this->resolveToken();
-        $response = $this->client->request('LIST', "metadata/{$this->secretPrefix}");
+        try {
+            $response = $this->client->request('LIST', "metadata/{$this->secretPrefix}");
+        } catch (ClientException $e) {
+            if ($e->getCode() == 404) {
+                return [];
+            }
+        }
 
         $json = \json_decode($response->getBody(), true);
 
@@ -392,6 +398,7 @@ class VaultEnvResolver extends MultiTenantResolverAbstract implements EnvResolve
      */
     private function processError(ClientException $e)
     {
+        Log::error($e);
         Log::error("Vault request failed: ".$e->getRequest()->getMethod()
             .' '
             .$e->getRequest()->getUri()

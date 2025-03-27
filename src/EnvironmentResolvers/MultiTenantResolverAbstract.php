@@ -29,6 +29,11 @@ abstract class MultiTenantResolverAbstract implements EnvResolverContract
         Environment::setResolver($this);
 
         $keys = $this->listSecrets();
+
+        if (!$keys) {
+            Log::warning('No Tenant Found');
+        }
+
         $this->refreshEnvironments($keys);
 
         return true;
