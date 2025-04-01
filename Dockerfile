@@ -1,4 +1,4 @@
-FROM php:8.2.26-cli AS base
+FROM php:8.2.28-cli AS base
 ARG NODE_VERSiON=20
 
 RUN groupadd -g 1000 www
