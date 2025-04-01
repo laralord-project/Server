@@ -177,6 +177,11 @@ class ServerConfigurator implements ConfiguratorContract
             'env_file_update',
             'Specify does the .env file update required on Vault secret updated',
         ],
+        'ENV_ON_UPDATED_COMMAND' => [
+            '',
+            'on_updated',
+            'The command to execute on environment updated. Example: php artisan queue:restart',
+        ],
 
         'OPTION_WORKERS' => [
             10, 'worker_num',

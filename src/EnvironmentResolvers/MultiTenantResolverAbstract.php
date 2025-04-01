@@ -133,7 +133,9 @@ abstract class MultiTenantResolverAbstract implements EnvResolverContract
      */
     public function storeToEnvFile(string $key, string $file): bool|string
     {
-        $env = $this->loadSecret($key)->toArray();
+        $this->env = $this->loadSecret($key);
+        $env = $this->env->toArray();
+
         $envFileContent = "";
 
         \array_walk($env, function ($value, $key) use (&$envFileContent) {

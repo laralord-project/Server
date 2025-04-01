@@ -2,7 +2,7 @@
 
 namespace Server;
 
-use OpenSwoole\{HTTP\Server as HttpServer, Server as SwooleServer};
+use OpenSwoole\{Event, HTTP\Server as HttpServer, Process, Server as SwooleServer};
 use Server\Configurator\ConfiguratorContract;
 use Server\Configurator\ServerConfigurator;
 use Server\EnvironmentResolvers\{EnvResolverContract, FileEnvResolver, MultiTenantResolverAbstract, VaultEnvResolver};
@@ -125,9 +125,41 @@ class Server
         // force update .env file
         $this->configurator->envSourceConfig['env_file_update'] = true;
 
-        $this->envResolver->loadSecret($tenantKey);
+        $this->envResolver->envFileUpdate = $envFile;
 
-        return $this->envResolver->storeToEnvFile($tenantKey, $envFile);
+        $stored = $this->envResolver->storeToEnvFile($tenantKey, $envFile);
+
+        // watching the secret changes
+        if (\in_array('--watch', $_SERVER['argv'])) {
+            $commands = \array_filter($_SERVER['argv'], function ($value) {
+                return \str_starts_with($value, '--command');
+            });
+
+            if ($commands) {
+                $commands = \array_map(fn($command) => \str_replace('--command=', '',$command), $commands);
+            }
+
+            $this->envResolver->sync(function() use ($commands) {
+                if ($commands)  {
+                    \array_walk($commands, function ($command) {
+                        $result = \exec($command, $output, $errorCode);
+
+                        if ($errorCode) {
+                            Log::error("Command '$command' execution failed with code: $errorCode", $output);
+                        }else {
+                            Log::info("Sync command '$command' processed.");
+                            Log::debug("Command output: ", [$result]);
+                        }
+                    });
+                }
+
+                Log::info('env synced');
+            });
+            Event::wait();
+            Log::info('Event Loop completed');
+        }
+
+        return $stored;
     }
 
 
@@ -156,7 +188,8 @@ class Server
         $this->addConfigWatcher();
         $this->watcher->watch($this->watchTargets, basePath: $this->basePath);
         // TODO fix the reload of workers / currently the reload doesn't update the workers context
-        $this->watcher->addCallback(fn(array $changes) => $this->server->reload());
+        $this->watcher->addCallback(fn(array $changes) => $this->server?->reload());
+
 
         Log::debug('Init watcher. Watching: ', $this->watchTargets ?: []);
     }
