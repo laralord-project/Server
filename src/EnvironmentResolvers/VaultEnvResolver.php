@@ -94,7 +94,7 @@ class VaultEnvResolver extends MultiTenantResolverAbstract implements EnvResolve
     /**
      * @var Environment
      */
-    private Environment $env;
+    protected Environment $env;
 
     private int $updatePeriod = 1;
 
@@ -260,9 +260,9 @@ class VaultEnvResolver extends MultiTenantResolverAbstract implements EnvResolve
                 if ($this->singleMode) {
                     $env = $this->loadSecret($this->key, false);
                     $env->id = 0;
-                    $changes = $this->env->isDiff($env);
+                    $changes = $this->env?->isDiff($env);
 
-                    if ($changes) {
+                    if (empty($this->env) || $changes) {
                         $this->env = $env;
                         $this->env->store();
 
