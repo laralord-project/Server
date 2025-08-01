@@ -182,7 +182,6 @@ class ServerConfigurator implements ConfiguratorContract
             'on_updated',
             'The command to execute on environment updated. Example: php artisan queue:restart',
         ],
-
         'OPTION_WORKERS' => [
             10, 'worker_num',
             'The number of worker processes to start. By default this is set to the number of CPU cores you have.',
